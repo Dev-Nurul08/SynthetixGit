@@ -1,79 +1,179 @@
 /**
- * SynthetixGit — Professional GitHub README Template Engine
- * Generates high-standard GitHub-Flavored Markdown for developer profile READMEs.
+ * SynthetixGit — World-Class Profile Template & Compiler Engine (Phase 2)
+ * Supports 15+ rich presets, venom capsule headers, beast mode dashboards,
+ * skillicons matrices, LeetCode cards, WakaTime embeds, and interactive widgets.
  */
 
-import { getBadgeUrl, BADGE_REGISTRY, type BadgeEntry } from './badge-registry';
+import { BADGE_REGISTRY } from './badge-registry';
 
-export type ThemeId = 'dark' | 'github_dark' | 'tokyonight' | 'radical' | 'nord' | 'dracula' | 'onehalf-dark';
-export type TemplateId = 'modern-developer' | 'minimalist-clean' | 'cyber-engineer' | 'fullstack-lead';
+export type ThemeId =
+  | 'github_dark'
+  | 'tokyonight'
+  | 'dark'
+  | 'nord'
+  | 'dracula'
+  | 'radical'
+  | 'cyberpunk'
+  | 'synthwave'
+  | 'matrix'
+  | 'catppuccin'
+  | 'solarized';
 
-export interface QuickFacts {
-  currentWork: string;
-  learning: string;
-  collaborate: string;
-  askMe: string;
-  reachMe: string;
-  funFact: string;
-}
+export type TemplateId =
+  | 'beast-mode-neon'
+  | 'cyberpunk-glitch'
+  | 'dracula-dark'
+  | 'nord-frost'
+  | 'minimal-monochrome'
+  | 'retro-terminal'
+  | 'sunset-gradient'
+  | 'glassmorphism'
+  | 'tokyo-night'
+  | 'catppuccin-mocha'
+  | 'solarized-dark'
+  | 'matrix-green'
+  | 'clean-corporate'
+  | 'acid-tech'
+  | 'synthwave-84';
 
 export interface ModuleConfig {
+  // 1. Capsule / Waving Header
   headerBanner: {
     enabled: boolean;
-    headerStyle: 'waving-hand' | 'capsule' | 'minimal';
+    headerStyle: 'venom-capsule' | 'waving-capsule' | 'minimal' | 'glitch' | 'retro-8bit';
     title: string;
     subtitle: string;
     typingLines: string[];
+    bannerColor: string;
   };
+
+  // 2. Beast Mode Multi-Column Stats Dashboard
+  beastModeDashboard: {
+    enabled: boolean;
+    showProfileViews: boolean;
+    showGrowthMetrics: boolean;
+    showOpenToWork: boolean;
+    showHireMe: boolean;
+    showStreakCard: boolean;
+    showWakaTime: boolean;
+    email: string;
+  };
+
+  // 3. GitHub Summary & Multi-Card Analytics
+  githubAnalytics: {
+    enabled: boolean;
+    showProfileDetailsCard: boolean;
+    showReposPerLanguage: boolean;
+    showMostCommitLanguage: boolean;
+    showStatsCard: boolean;
+    showActivityWave: boolean;
+    showTrophies: boolean;
+    showNextAchievements: boolean;
+  };
+
+  // 4. Education, Academic Journey & LeetCode
+  educationAndSkills: {
+    enabled: boolean;
+    institutionName: string;
+    institutionColor: string;
+    skillIcons: string[]; // skillicons.dev slugs
+    additionalBadges: { name: string; color: string; logo: string }[];
+    showWakaTimeDropdown: boolean;
+    wakaTimeShareSvgUrl?: string;
+    showTopLangsPie: boolean;
+    showLeetCodeCard: boolean;
+    leetCodeUsername?: string;
+  };
+
+  // 5. Technology Arsenal Matrix (80x80 table)
+  techArsenal: {
+    enabled: boolean;
+    items: {
+      name: string;
+      iconUrl: string;
+      levelBadge: string;
+      levelColor: string;
+    }[];
+  };
+
+  // 6. About Me & Facts
   aboutMe: {
     enabled: boolean;
     bioText: string;
+    quickFacts: {
+      currentWork: string;
+      learning: string;
+      collaborate: string;
+      askMe: string;
+      reachMe: string;
+      funFact: string;
+    };
     showLocation: boolean;
     showCompany: boolean;
     showBlog: boolean;
-    quickFacts: QuickFacts;
   };
+
+  // 7. Tech Stack Badges (Categorized Shields)
   techStack: {
     enabled: boolean;
     style: 'for-the-badge' | 'flat-square' | 'flat';
     categorize: boolean;
-    badges: string[]; // slugs
+    badges: string[];
   };
-  githubStats: {
-    enabled: boolean;
-    showGeneralStats: boolean;
-    showStreak: boolean;
-    showTopLangs: boolean;
-    showActivityGraph: boolean;
-    showTrophies: boolean;
-  };
+
+  // 8. Featured Projects
   featuredRepos: {
     enabled: boolean;
-    repos: Array<{
+    repos: {
       name: string;
-      description: string | null;
+      description?: string | null;
       url: string;
       stargazerCount: number;
-      primaryLanguage: { name: string; color: string } | null;
-    }>;
+      primaryLanguage?: { name: string; color: string } | null;
+    }[];
   };
-  snakeAnimation: {
+
+  // 9. Interactive Breakout / Snake Game
+  gameSuite: {
     enabled: boolean;
+    gameType: 'breakout' | 'snake' | 'pacman';
+    motto: string;
   };
+
+  // 10. Social & Connect Matrix
   socialLinks: {
     enabled: boolean;
     github: string;
-    twitter: string;
     linkedin: string;
+    twitter: string;
+    email: string;
+    behance: string;
+    instagram: string;
     portfolio: string;
     discord: string;
     youtube: string;
-    email: string;
+    scheduleMeetingUrl: string;
+    responseTime: string;
   };
+
+  // 11. Daily Dev Quote & Collapsible Coding Challenge
+  interactiveWidgets: {
+    enabled: boolean;
+    showDailyDevQuote: boolean;
+    showCodingChallenge: boolean;
+    showVisitorMap: boolean;
+    showPersonalPhilosophy: boolean;
+    mantras: string[];
+  };
+
+  // 12. Footer
   footer: {
     enabled: boolean;
+    footerStyle: 'waving-capsule' | 'minimal' | 'custom-badge';
+    closingText: string;
     showVisitorBadge: boolean;
-    quote: string;
+    authorName: string;
+    statusBadgeText: string;
   };
 }
 
@@ -83,397 +183,593 @@ export interface ProfileConfig {
   theme: ThemeId;
   modules: ModuleConfig;
   profileData?: {
-    name: string;
-    bio: string | null;
-    location: string | null;
-    company: string | null;
-    blog: string | null;
-    avatarUrl: string;
-    followers: number;
-    publicRepos: number;
+    name?: string;
+    bio?: string | null;
+    location?: string | null;
+    company?: string | null;
+    blog?: string | null;
+    avatarUrl?: string;
+    followers?: number;
+    publicRepos?: number;
+    createdAt?: string;
   };
 }
 
-// ── Theme Mapping for SVG services ──
-const STATS_THEME_MAP: Record<ThemeId, string> = {
-  dark: 'dark',
-  github_dark: 'github_dark',
-  tokyonight: 'tokyonight',
-  radical: 'radical',
-  nord: 'nord',
-  dracula: 'dracula',
-  'onehalf-dark': 'onehalf-dark',
-};
-
-// ── Header Renderer ──
-function renderHeader(config: ProfileConfig): string {
-  const { headerBanner } = config.modules;
-  if (!headerBanner.enabled) return '';
-
-  const name = config.profileData?.name || config.username;
-  const lines: string[] = [];
-
-  lines.push(`<div align="center">\n`);
-
-  if (headerBanner.headerStyle === 'waving-hand') {
-    lines.push(`  <h1>Hey there, I'm ${headerBanner.title || name} <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="30px" alt="wave"></h1>\n`);
-  } else if (headerBanner.headerStyle === 'capsule') {
-    lines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=180&section=header&text=${encodeURIComponent(headerBanner.title || name)}&fontSize=42&fontColor=ffffff&animation=fadeIn" width="100%" alt="Header Banner" />\n`);
-  } else {
-    lines.push(`  <h1>${headerBanner.title || name}</h1>\n`);
-  }
-
-  if (headerBanner.subtitle) {
-    lines.push(`  <h3>${headerBanner.subtitle}</h3>\n`);
-  }
-
-  // Typing SVG
-  if (headerBanner.typingLines.length > 0) {
-    const typingQuery = headerBanner.typingLines.join(';');
-    lines.push(`  <p align="center">\n    <a href="https://github.com/${config.username}">\n      <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=38BDF8&center=true&vCenter=true&width=500&lines=${encodeURIComponent(typingQuery)}" alt="Typing SVG" />\n    </a>\n  </p>\n`);
-  }
-
-  lines.push(`</div>\n\n---\n`);
-  return lines.join('\n');
+export function createDefaultModules(): ModuleConfig {
+  return {
+    headerBanner: {
+      enabled: true,
+      headerStyle: 'venom-capsule',
+      title: 'Dev-Nurul',
+      subtitle: 'Full-Stack & MERN Developer',
+      typingLines: [
+        'Diploma in Computer Student @ VidhyaDeep University 🎓',
+        'Frontend Ninja ⚡ Backend Explorer 🔍',
+        'JavaScript Enthusiast 💻 DSA Master 🏆',
+        'Building scalable web platforms 🚀',
+      ],
+      bannerColor: 'gradient',
+    },
+    beastModeDashboard: {
+      enabled: true,
+      showProfileViews: true,
+      showGrowthMetrics: true,
+      showOpenToWork: true,
+      showHireMe: true,
+      showStreakCard: true,
+      showWakaTime: true,
+      email: 'shaikhnurul8200@gmail.com',
+    },
+    githubAnalytics: {
+      enabled: true,
+      showProfileDetailsCard: true,
+      showReposPerLanguage: true,
+      showMostCommitLanguage: true,
+      showStatsCard: true,
+      showActivityWave: true,
+      showTrophies: true,
+      showNextAchievements: true,
+    },
+    educationAndSkills: {
+      enabled: true,
+      institutionName: 'VidhyaDeep_University',
+      institutionColor: '6a11cb',
+      skillIcons: [
+        'git', 'github', 'html', 'css', 'js', 'jquery', 'bootstrap', 'tailwind',
+        'nodejs', 'express', 'mongodb', 'mysql', 'c', 'cpp', 'python', 'figma',
+        'ai', 'ps', 'vercel', 'netlify', 'vscode', 'atom', 'vite', 'powershell',
+        'npm', 'bun', 'yarn', 'notion', 'svg', 'bash', 'markdown', 'ts', 'replit'
+      ],
+      additionalBadges: [
+        { name: 'TRAE', color: '3a7bd5', logo: 'visualstudiocode' },
+        { name: 'Qoder', color: '2c3e50', logo: 'visualstudiocode' },
+        { name: 'EJS', color: '4a4a55', logo: 'ejs' },
+        { name: 'MJS', color: 'FF6B6B', logo: 'javascript' },
+        { name: 'Render', color: '46a3b7', logo: 'render' },
+      ],
+      showWakaTimeDropdown: true,
+      wakaTimeShareSvgUrl: 'https://wakatime.com/share/@__https_shivu/1e3ecda4-24d6-47c5-bc37-a11c044df727.svg',
+      showTopLangsPie: true,
+      showLeetCodeCard: true,
+      leetCodeUsername: 'Fr_Nurul',
+    },
+    techArsenal: {
+      enabled: true,
+      items: [
+        { name: 'JavaScript', iconUrl: 'https://techstack-generator.vercel.app/js-icon.svg', levelBadge: 'ES6+', levelColor: '6a11cb' },
+        { name: 'C++', iconUrl: 'https://techstack-generator.vercel.app/cpp-icon.svg', levelBadge: 'DSA', levelColor: '2575fc' },
+        { name: 'Python', iconUrl: 'https://techstack-generator.vercel.app/python-icon.svg', levelBadge: '3.x', levelColor: '6a11cb' },
+        { name: 'MySQL', iconUrl: 'https://techstack-generator.vercel.app/mysql-icon.svg', levelBadge: 'Database', levelColor: '2575fc' },
+        { name: 'React', iconUrl: 'https://techstack-generator.vercel.app/react-icon.svg', levelBadge: 'Learning', levelColor: '6a11cb' },
+        { name: 'Docker', iconUrl: 'https://techstack-generator.vercel.app/docker-icon.svg', levelBadge: 'Future', levelColor: '2575fc' },
+        { name: 'AWS', iconUrl: 'https://techstack-generator.vercel.app/aws-icon.svg', levelBadge: 'Cloud', levelColor: '6a11cb' },
+        { name: 'GitHub', iconUrl: 'https://techstack-generator.vercel.app/github-icon.svg', levelBadge: 'Expert', levelColor: 'FFD700' },
+        { name: 'REST API', iconUrl: 'https://techstack-generator.vercel.app/restapi-icon.svg', levelBadge: 'Core', levelColor: '2575fc' },
+        { name: 'Nginx', iconUrl: 'https://techstack-generator.vercel.app/nginx-icon.svg', levelBadge: 'DevOps', levelColor: '6a11cb' },
+      ],
+    },
+    aboutMe: {
+      enabled: true,
+      bioText: 'I am a Full Stack Developer. Passionate about building high-performance web applications and mastering Data Structures & Algorithms.',
+      quickFacts: {
+        currentWork: 'Full-Stack MERN Projects & Cloud Architectures',
+        learning: 'System Design, Microservices, and Advanced TypeScript',
+        collaborate: 'Open Source Developer Tools & Full Stack Apps',
+        askMe: 'JavaScript, Node.js, Express, MongoDB, C++',
+        reachMe: 'shaikhnurul8200@gmail.com',
+        funFact: 'Talk is cheap. Show me the code! ⚡',
+      },
+      showLocation: true,
+      showCompany: true,
+      showBlog: true,
+    },
+    techStack: {
+      enabled: true,
+      style: 'for-the-badge',
+      categorize: true,
+      badges: ['javascript', 'typescript', 'react', 'nextdotjs', 'nodedotjs', 'express', 'mongodb', 'tailwindcss', 'git', 'docker'],
+    },
+    featuredRepos: {
+      enabled: true,
+      repos: [],
+    },
+    gameSuite: {
+      enabled: true,
+      gameType: 'breakout',
+      motto: '“Code. Commit. Conquer. — My journey, my style.”',
+    },
+    socialLinks: {
+      enabled: true,
+      github: 'Dev-Nurul08',
+      linkedin: 'nurul-shaikh-44b41838b',
+      twitter: '',
+      email: 'shaikhnurul8200@gmail.com',
+      behance: 'NurulShaikh2',
+      instagram: '_fr.nurull',
+      portfolio: '',
+      discord: '',
+      youtube: '',
+      scheduleMeetingUrl: 'https://calendar.google.com',
+      responseTime: '< 24 hours',
+    },
+    interactiveWidgets: {
+      enabled: true,
+      showDailyDevQuote: true,
+      showCodingChallenge: true,
+      showVisitorMap: true,
+      showPersonalPhilosophy: true,
+      mantras: [
+        '💡 "Innovation happens at the intersection of curiosity and code"',
+        '🎯 "Focus on progress, not perfection"',
+        '🔥 "Build it, break it, make it better"',
+        '⚡ "Learn in public, fail in private, succeed everywhere"',
+      ],
+    },
+    footer: {
+      enabled: true,
+      footerStyle: 'waving-capsule',
+      closingText: 'Thanks for visiting!',
+      showVisitorBadge: true,
+      authorName: 'Nurul Shaikh',
+      statusBadgeText: 'Status-Beast Mode ON',
+    },
+  };
 }
 
-// ── About Me Renderer ──
-function renderAboutMe(config: ProfileConfig): string {
-  const { aboutMe } = config.modules;
-  if (!aboutMe.enabled) return '';
-
+export function compileProfile(config: ProfileConfig): { markdown: string; workflowYaml?: string } {
+  const { username, modules } = config;
+  const user = username || 'developer';
   const lines: string[] = [];
-  lines.push(`### 🚀 About Me\n`);
 
-  if (aboutMe.bioText) {
-    lines.push(`${aboutMe.bioText}\n`);
+  lines.push('<div align="center">');
+  lines.push('');
+
+  // ── 1. Capsule Header ──
+  if (modules.headerBanner.enabled) {
+    const titleEnc = encodeURIComponent(modules.headerBanner.title || user);
+    const subEnc = encodeURIComponent(modules.headerBanner.subtitle || 'Full-Stack Developer');
+    
+    if (modules.headerBanner.headerStyle === 'venom-capsule') {
+      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=venom&color=gradient&customColorList=1,2,4,5,40&height=250&section=header&text=${titleEnc}&fontSize=65&animation=twinkling&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Fira%20Code&descFont=Roboto&textColor=FF4500&descColor=00FF7F&borderRadius=25" width="100%" alt="Header Banner" />`);
+    } else if (modules.headerBanner.headerStyle === 'waving-capsule') {
+      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=220&section=header&text=${titleEnc}&fontSize=50&animation=twinkling&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto" width="100%" alt="Header Banner" />`);
+    } else if (modules.headerBanner.headerStyle === 'minimal') {
+      lines.push(`  <h1>${modules.headerBanner.title || user}</h1>`);
+      lines.push(`  <p><em>${modules.headerBanner.subtitle}</em></p>`);
+    }
+
+    lines.push('');
+
+    // Typing SVG lines
+    if (modules.headerBanner.typingLines.length > 0) {
+      const typingParam = encodeURIComponent(modules.headerBanner.typingLines.join(';'));
+      lines.push('  <!-- Animated Profile Typing Header -->');
+      lines.push('  <div align="center">');
+      lines.push(`    <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=25&duration=3000&pause=1000&color=gradient&customColorList=0,4,4,8,30&center=true&vCenter=true&multiline=true&width=800&height=100&lines=${typingParam}" alt="Typing SVG" />`);
+      lines.push('  </div>');
+      lines.push('');
+    }
   }
 
-  const qf = aboutMe.quickFacts;
-  const facts: string[] = [];
+  // ── 2. Beast Mode Stats Dashboard Grid ──
+  if (modules.beastModeDashboard.enabled) {
+    lines.push('  <!-- BEAST MODE STATS DASHBOARD: Live Multi-Column Matrix -->');
+    lines.push('  <div align="center">');
+    lines.push('    <h2 align="center" style="font-family: \'Orbitron\', sans-serif; color: #8a2be2; margin: 20px 0;">');
+    lines.push('      📊 Beast Mode Stats Dashboard');
+    lines.push('    </h2>');
+    lines.push('    <table style="width: 100%; border-collapse: collapse; margin: 20px 0">');
+    lines.push('      <tr>');
 
-  if (qf.currentWork) facts.push(`- 🔭 **Working on**: ${qf.currentWork}`);
-  if (qf.learning) facts.push(`- 🌱 **Exploring & Learning**: ${qf.learning}`);
-  if (qf.collaborate) facts.push(`- 👯 **Open to collaborate on**: ${qf.collaborate}`);
-  if (qf.askMe) facts.push(`- 💬 **Ask me about**: ${qf.askMe}`);
-  if (qf.reachMe) facts.push(`- 📫 **How to reach me**: ${qf.reachMe}`);
-  if (qf.funFact) facts.push(`- ⚡ **Fun fact**: ${qf.funFact}`);
+    if (modules.beastModeDashboard.showProfileViews) {
+      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #8a2be2, #ba55d3); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #8a2be2;">');
+      lines.push(`          <img src="https://komarev.com/ghpvc/?username=${user}&color=8A2BE2&style=flat-square&label=Profile%20Views" alt="Profile Views" />`);
+      lines.push('          <br /><strong style="color: #00ffff; font-family: \'Fira Code\'">🚀 Live Counter</strong>');
+      lines.push('        </td>');
+    }
 
-  if (facts.length > 0) {
-    lines.push(facts.join('\n') + '\n');
-  }
+    if (modules.beastModeDashboard.showGrowthMetrics) {
+      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #ff1493, #ff69b4); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #ff1493;">');
+      lines.push(`          <img src="https://img.shields.io/github/followers/${user}?style=flat-square&color=FF1493&label=Followers&logo=person-add" alt="Followers" />`);
+      lines.push(`          <img src="https://img.shields.io/github/stars/${user}?style=flat-square&color=FF69B4&label=Stars&logo=star" alt="Stars" />`);
+      lines.push('          <br /><strong style="color: #ffd700; font-family: \'Fira Code\'">📈 Growth Metrics</strong>');
+      lines.push('        </td>');
+    }
 
-  const metaPills: string[] = [];
-  if (aboutMe.showLocation && config.profileData?.location) {
-    metaPills.push(`📍 Based in **${config.profileData.location}**`);
-  }
-  if (aboutMe.showCompany && config.profileData?.company) {
-    metaPills.push(`🏢 Building at **${config.profileData.company}**`);
-  }
-  if (aboutMe.showBlog && config.profileData?.blog) {
-    metaPills.push(`🌐 [Portfolio Website](${config.profileData.blog.startsWith('http') ? config.profileData.blog : `https://${config.profileData.blog}`})`);
-  }
-
-  if (metaPills.length > 0) {
-    lines.push(metaPills.join(' • ') + '\n');
-  }
-
-  return lines.join('\n');
-}
-
-// ── Tech Stack Renderer ──
-function renderTechStack(config: ProfileConfig): string {
-  const { techStack } = config.modules;
-  if (!techStack.enabled || techStack.badges.length === 0) return '';
-
-  const badgeEntries = techStack.badges
-    .map(slug => BADGE_REGISTRY.find(b => b.slug === slug))
-    .filter((b): b is BadgeEntry => !!b);
-
-  if (badgeEntries.length === 0) return '';
-
-  const lines: string[] = [];
-  lines.push(`### 🛠️ Languages & Tools\n`);
-
-  if (techStack.categorize) {
-    const categories: { key: string; label: string }[] = [
-      { key: 'languages', label: 'Languages' },
-      { key: 'frameworks', label: 'Frameworks & Libraries' },
-      { key: 'databases', label: 'Databases & Storage' },
-      { key: 'tools', label: 'DevOps & Tools' },
-      { key: 'cloud', label: 'Cloud Services' },
-      { key: 'testing', label: 'Testing' },
-    ];
-
-    categories.forEach(cat => {
-      const inCat = badgeEntries.filter(b => b.category === cat.key);
-      if (inCat.length > 0) {
-        lines.push(`**${cat.label}**\n`);
-        lines.push(`<p align="left">\n` + inCat.map(b => `  <img src="${getBadgeUrl(b, techStack.style)}" alt="${b.name}" />`).join('\n') + `\n</p>\n`);
+    if (modules.beastModeDashboard.showOpenToWork) {
+      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #00ff7f, #32cd32); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #00ff7f;">');
+      lines.push('          <img src="https://img.shields.io/badge/Open%20to%20Work-✅%20YES-00FF7F?style=flat-square&logo=briefcase" alt="Open to Work" />');
+      if (modules.beastModeDashboard.email) {
+        lines.push(`          <br /><a href="mailto:${modules.beastModeDashboard.email}"><img src="https://img.shields.io/badge/Hire%20Me-🚀%20Click%20Here-FF4500?style=flat-square&logo=rocket&logoColor=white" alt="Hire Me" /></a>`);
       }
-    });
-  } else {
-    lines.push(`<p align="center">\n` + badgeEntries.map(b => `  <img src="${getBadgeUrl(b, techStack.style)}" alt="${b.name}" />`).join('\n') + `\n</p>\n`);
-  }
-
-  return lines.join('\n');
-}
-
-// ── GitHub Stats Renderer ──
-function renderGitHubStats(config: ProfileConfig): string {
-  const { githubStats } = config.modules;
-  if (!githubStats.enabled) return '';
-
-  const theme = STATS_THEME_MAP[config.theme] || 'tokyonight';
-  const username = config.username;
-  const lines: string[] = [];
-
-  lines.push(`### 📊 GitHub Activity & Metrics\n`);
-  lines.push(`<div align="center">\n`);
-
-  // General stats & Top languages row
-  if (githubStats.showGeneralStats || githubStats.showTopLangs) {
-    if (githubStats.showGeneralStats) {
-      lines.push(`  <img src="https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&theme=${theme}&hide_border=true&count_private=true" alt="GitHub Stats" height="165" />`);
+      lines.push('          <br /><strong style="color: #000; font-family: \'Fira Code\'">💼 Professional Status</strong>');
+      lines.push('        </td>');
     }
-    if (githubStats.showTopLangs) {
-      lines.push(`  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&theme=${theme}&hide_border=true" alt="Top Languages" height="165" />`);
+
+    if (modules.beastModeDashboard.showStreakCard) {
+      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #8a2be2, #4b0082); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #8a2be2;">');
+      lines.push(`          <img src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=dark&hide_border=true&stroke=0000&background=0d1117&ring=00FFFF&fire=FF4500&currStreakLabel=8A2BE2&sideLabels=00FF7F&dates=8A2BE2" alt="Streak Stats" />`);
+      lines.push('          <br /><strong style="color: #ba55d3; font-family: \'Fira Code\'">🔥 Contribution Streak</strong>');
+      lines.push('        </td>');
     }
+
+    lines.push('      </tr>');
+
+    if (modules.beastModeDashboard.showWakaTime) {
+      lines.push('      <tr>');
+      lines.push('        <td align="center" colspan="4" style="padding: 10px">');
+      lines.push(`          <img src="https://github-readme-stats.vercel.app/api/wakatime?username=${user}&color=black&theme=dark&hide_border=true" alt="Practice Time." />`);
+      lines.push('        </td>');
+      lines.push('      </tr>');
+    }
+
+    lines.push('    </table>');
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('---');
     lines.push('');
   }
 
-  // Streak Stats
-  if (githubStats.showStreak) {
-    lines.push(`  <img src="https://github-readme-streak-stats.herokuapp.com/?user=${username}&theme=${theme}&hide_border=true" alt="GitHub Streak" />\n`);
-  }
-
-  // Activity Graph
-  if (githubStats.showActivityGraph) {
-    const graphTheme = theme === 'dark' ? 'react-dark' : theme;
-    lines.push(`  <img src="https://github-readme-activity-graph.vercel.app/graph?username=${username}&theme=${graphTheme}&hide_border=true&area=true" alt="Activity Graph" width="100%" />\n`);
-  }
-
-  // Trophies
-  if (githubStats.showTrophies) {
-    lines.push(`  <img src="https://github-profile-trophy.vercel.app/?username=${username}&theme=${theme}&no-frame=true&column=7&margin_w=10" alt="GitHub Trophies" width="100%" />\n`);
-  }
-
-  lines.push(`</div>\n`);
-  return lines.join('\n');
-}
-
-// ── Featured Repositories ──
-function renderFeaturedRepos(config: ProfileConfig): string {
-  const { featuredRepos } = config.modules;
-  if (!featuredRepos.enabled || featuredRepos.repos.length === 0) return '';
-
-  const lines: string[] = [];
-  lines.push(`### 🌟 Featured Repositories\n`);
-
-  featuredRepos.repos.slice(0, 4).forEach(repo => {
-    const lang = repo.primaryLanguage?.name ? ` • \`${repo.primaryLanguage.name}\`` : '';
-    const stars = repo.stargazerCount > 0 ? ` • ★ ${repo.stargazerCount}` : '';
-    lines.push(`- **[${repo.name}](${repo.url})**${lang}${stars}`);
-    if (repo.description) {
-      lines.push(`  _${repo.description}_`);
+  // ── 3. GitHub Performance Summary Cards ──
+  if (modules.githubAnalytics.enabled) {
+    lines.push('  <!-- GitHub Account Performance Dashboard -->');
+    lines.push('  <h2 align="center">⚡ GitHub Performance Dashboard</h2>');
+    lines.push('');
+    
+    if (modules.githubAnalytics.showProfileDetailsCard) {
+      lines.push('  <div align="center">');
+      lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${user}&theme=github_dark" alt="Profile Details" />`);
+      lines.push('  </div>');
+      lines.push('');
     }
-  });
 
-  lines.push('');
-  return lines.join('\n');
-}
+    if (modules.githubAnalytics.showReposPerLanguage || modules.githubAnalytics.showMostCommitLanguage || modules.githubAnalytics.showStatsCard) {
+      lines.push('  <div align="center">');
+      if (modules.githubAnalytics.showReposPerLanguage) {
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${user}&theme=dark" width="32%" alt="Repos per Language" />`);
+      }
+      if (modules.githubAnalytics.showMostCommitLanguage) {
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${user}&theme=dark" width="32%" alt="Most Commit Language" />`);
+      }
+      if (modules.githubAnalytics.showStatsCard) {
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=${user}&theme=dark" width="32%" alt="Overall Stats" />`);
+      }
+      lines.push('  </div>');
+      lines.push('');
+    }
 
-// ── Contribution Snake ──
-function renderSnake(config: ProfileConfig): string {
-  const { snakeAnimation } = config.modules;
-  if (!snakeAnimation.enabled) return '';
-
-  const username = config.username;
-
-  return `### 🐍 Contribution Graph
-
-<div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${username}/${username}/output/github-contribution-grid-snake-dark.svg" />
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${username}/${username}/output/github-contribution-grid-snake.svg" />
-    <img alt="GitHub Contribution Snake Animation" src="https://raw.githubusercontent.com/${username}/${username}/output/github-contribution-grid-snake.svg" width="100%" />
-  </picture>
-</div>
-\n`;
-}
-
-// ── Social Links ──
-function renderSocials(config: ProfileConfig): string {
-  const { socialLinks } = config.modules;
-  if (!socialLinks.enabled) return '';
-
-  const links: string[] = [];
-
-  if (socialLinks.github) {
-    links.push(`  <a href="https://github.com/${socialLinks.github}" target="_blank">\n    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />\n  </a>`);
-  }
-  if (socialLinks.linkedin) {
-    links.push(`  <a href="https://linkedin.com/in/${socialLinks.linkedin}" target="_blank">\n    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />\n  </a>`);
-  }
-  if (socialLinks.twitter) {
-    links.push(`  <a href="https://twitter.com/${socialLinks.twitter}" target="_blank">\n    <img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=x&logoColor=white" alt="Twitter" />\n  </a>`);
-  }
-  if (socialLinks.discord) {
-    links.push(`  <a href="${socialLinks.discord.startsWith('http') ? socialLinks.discord : `https://discord.gg/${socialLinks.discord}`}" target="_blank">\n    <img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />\n  </a>`);
-  }
-  if (socialLinks.youtube) {
-    links.push(`  <a href="https://youtube.com/@${socialLinks.youtube}" target="_blank">\n    <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" />\n  </a>`);
-  }
-  if (socialLinks.portfolio) {
-    const url = socialLinks.portfolio.startsWith('http') ? socialLinks.portfolio : `https://${socialLinks.portfolio}`;
-    links.push(`  <a href="${url}" target="_blank">\n    <img src="https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=safari&logoColor=white" alt="Portfolio" />\n  </a>`);
-  }
-  if (socialLinks.email) {
-    links.push(`  <a href="mailto:${socialLinks.email}">\n    <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />\n  </a>`);
+    lines.push('---');
+    lines.push('');
   }
 
-  if (links.length === 0) return '';
+  // ── 4. Education & Skill Proficiency Journey ──
+  if (modules.educationAndSkills.enabled) {
+    const edu = modules.educationAndSkills;
+    lines.push('  <!-- Education & Skills Journey -->');
+    lines.push('  <h2 align="center">🎓 Education & Skills Journey</h2>');
+    lines.push('');
+    lines.push('  <div align="center">');
+    lines.push('  <table width="100%">');
+    lines.push('    <tr>');
+    lines.push('      <td width="50%" valign="top">');
+    lines.push('        <h3 align="center">📚 Academic Path</h3>');
+    lines.push('        <div align="center">');
+    lines.push(`          <img src="https://img.shields.io/badge/${edu.institutionName}-${edu.institutionColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
+    lines.push('          <br /><br />');
 
-  return `### 🌐 Connect With Me\n\n<p align="center">\n${links.join('\n')}\n</p>\n\n`;
-}
+    // SkillIcons Dev Grid
+    if (edu.skillIcons.length > 0) {
+      const chunk1 = edu.skillIcons.slice(0, 30).join(',');
+      const chunk2 = edu.skillIcons.slice(30).join(',');
+      lines.push('          <div style="margin: 20px 0; font-size: 1.1em;">');
+      lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk1}" style="height: 54px; margin: 4px;" alt="Skill Icons" />`);
+      if (chunk2) {
+        lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk2}" style="height: 54px; margin: 4px;" alt="Additional Skill Icons" />`);
+      }
+      lines.push('          </div>');
+    }
 
-// ── Footer ──
-function renderFooter(config: ProfileConfig): string {
-  const { footer } = config.modules;
-  if (!footer.enabled) return '';
+    // Additional Custom Badges
+    if (edu.additionalBadges.length > 0) {
+      lines.push('          <h3 align="center">Additional Skills</h3>');
+      lines.push('          <div style="margin: 15px 0;">');
+      for (const badge of edu.additionalBadges) {
+        lines.push(`            <img src="https://img.shields.io/badge/${badge.name}-${badge.color}?style=for-the-badge&logo=${badge.logo}&logoColor=white" style="height: 30px; margin: 3px;" />`);
+      }
+      lines.push('          </div>');
+    }
 
-  const lines: string[] = [];
-  lines.push(`---\n`);
+    // WakaTime collapsible progress
+    if (edu.showWakaTimeDropdown && edu.wakaTimeShareSvgUrl) {
+      lines.push('          <br />');
+      lines.push('          <details open>');
+      lines.push('            <summary><b>🔍 View Detailed Coding Activity</b></summary>');
+      lines.push('            <br />');
+      lines.push(`            <img src="${edu.wakaTimeShareSvgUrl}" alt="WakaTime Stats" style="border-radius: 12px; box-shadow: 0 0 15px #8a2be2;" />`);
+      lines.push('            <br /><strong style="color: #8a2be2; font-size: 16px; font-family: \'Fira Code\';">⏱️ Coding Activity - Auto-Updates Weekly</strong>');
+      lines.push('          </details>');
+    }
 
-  if (footer.quote) {
-    lines.push(`<div align="center">\n  <p><em>${footer.quote}</em></p>\n</div>\n`);
+    lines.push('        </div>');
+    lines.push('      </td>');
+
+    // Right Column: Proficiency Charts & LeetCode
+    lines.push('      <td width="50%" valign="top">');
+    lines.push('        <h3 align="center">🚀 Skill Proficiency & Coding</h3>');
+    lines.push('        <div align="center">');
+    if (edu.showTopLangsPie) {
+      lines.push(`          <img width="400" height="300" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${user}&layout=pie&theme=dark&hide_border=true" alt="Top Languages Pie" />`);
+      lines.push('          <br />');
+    }
+    if (edu.showLeetCodeCard && edu.leetCodeUsername) {
+      lines.push(`          <img src="https://leetcard.jacoblin.cool/${edu.leetCodeUsername}?theme=dark&font=Karma&ext=heatmap" width="400" alt="LeetCode Stats" />`);
+    }
+    lines.push('        </div>');
+    lines.push('      </td>');
+    lines.push('    </tr>');
+    lines.push('  </table>');
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
   }
 
-  if (footer.showVisitorBadge) {
-    lines.push(`<div align="center">\n  <img src="https://komarev.com/ghpvc/?username=${config.username}&label=Profile%20Views&color=38BDF8&style=flat-square" alt="Profile Views" />\n</div>\n`);
+  // ── 5. Technology Arsenal Matrix (80x80 Grid Table) ──
+  if (modules.techArsenal.enabled && modules.techArsenal.items.length > 0) {
+    lines.push('  <!-- Technology Arsenal -->');
+    lines.push('  <h2 align="center">🛠️ Technology Arsenal</h2>');
+    lines.push('');
+    lines.push('  <div align="center">');
+    lines.push('    <table>');
+
+    const items = modules.techArsenal.items;
+    const rows: typeof items[] = [];
+    for (let i = 0; i < items.length; i += 5) {
+      rows.push(items.slice(i, i + 5));
+    }
+
+    for (const row of rows) {
+      lines.push('      <tr>');
+      for (const item of row) {
+        lines.push('        <td align="center" width="110">');
+        lines.push(`          <img src="${item.iconUrl}" alt="${item.name}" width="70" height="70" />`);
+        lines.push(`          <br /><b>${item.name}</b>`);
+        lines.push(`          <br /><img src="https://img.shields.io/badge/${encodeURIComponent(item.levelBadge)}-${item.levelColor}?style=flat-square" />`);
+        lines.push('        </td>');
+      }
+      lines.push('      </tr>');
+    }
+
+    lines.push('    </table>');
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
   }
 
-  return lines.join('\n');
-}
+  // ── 6. Advanced GitHub Analytics & Activity Graph ──
+  if (modules.githubAnalytics.enabled && modules.githubAnalytics.showActivityWave) {
+    lines.push('  <!-- Enhanced GitHub Analytics & Activity -->');
+    lines.push('  <h2 align="center">📊 Advanced GitHub Analytics</h2>');
+    lines.push('');
+    lines.push('  <div align="center">');
+    lines.push(`    <img width="49%" src="https://github-readme-stats-sigma-five.vercel.app/api?username=${user}&show_icons=true&hide_border=true&title_color=7c217a&icon_color=7c217a&bg_color=0d1117&text_color=ffffff&hide_rank=false&show=reviews,prs_merged,prs_merged_percentage" alt="Stats" />`);
+    lines.push(`    <img width="49%" src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=dark&hide_border=true&stroke=0000&background=0d1117&ring=8A2387&fire=8A2387&currStreakLabel=8A2387" alt="Streaks" />`);
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('  <details open>');
+    lines.push('    <summary><b>📈 Contribution Metrics & Intensity</b></summary>');
+    lines.push('    <br />');
+    lines.push('    <div align="center">');
+    lines.push(`      <img src="https://github-readme-activity-graph.vercel.app/graph?username=${user}&bg_color=0d1117&color=8A2387&line=2575fc&point=8A2387&area=true&hide_border=true&custom_title=Weekly+Code+Intensity&theme=dark&border_radius=20&line_width=3&area_color=2575fc" alt="Activity Graph" />`);
+    lines.push('    </div>');
+    lines.push('  </details>');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
 
-// ── Snake Actions Workflow ──
-export function generateSnakeWorkflow(username: string): string {
-  return `name: Generate Snake Animation
+  // ── 7. GitHub Achievement Showcase & Trophies ──
+  if (modules.githubAnalytics.enabled && modules.githubAnalytics.showTrophies) {
+    lines.push('  <!-- GitHub Achievement Showcase -->');
+    lines.push('  <h2 align="center">🏆 GitHub Achievement Showcase</h2>');
+    lines.push('');
+    lines.push('  <div align="center">');
+    lines.push(`    <img src="https://github-profile-trophy.vercel.app/?username=${user}" alt="GitHub Trophies" />`);
+    lines.push('  </div>');
+    lines.push('');
+
+    if (modules.githubAnalytics.showNextAchievements) {
+      lines.push('  <div align="center">');
+      lines.push('    <h3>🎯 Next Achievements to Unlock</h3>');
+      lines.push('    <img src="https://img.shields.io/badge/Arctic_Code_Vault_Contributor-2026-6a11cb?style=for-the-badge&logo=github" />');
+      lines.push('    <img src="https://img.shields.io/badge/300_Days_Streak-In_Progress-2575fc?style=for-the-badge&logo=github" />');
+      lines.push('    <img src="https://img.shields.io/badge/Pull_Shark-Coming_Soon-8A2387?style=for-the-badge&logo=github" />');
+      lines.push('  </div>');
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('');
+  }
+
+  // ── 8. Breakout / Snake Game Suite ──
+  if (modules.gameSuite.enabled) {
+    lines.push('  <!-- 🎮 Interactive Game Suite Banner -->');
+    lines.push('  <h2 align="center">Break-Out Readme</h2>');
+    lines.push('');
+    lines.push('  <div align="center" style="background: linear-gradient(135deg, #2c3e50, #4a6572); padding: 25px; border-radius: 20px; margin: 20px 0;">');
+    lines.push('    <picture>');
+    lines.push(`      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake-dark.svg" />`);
+    lines.push(`      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+    lines.push(`      <img alt="Breakout & Snake Game" src="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+    lines.push('    </picture>');
+    lines.push('    <br />');
+    lines.push(`    <em>${modules.gameSuite.motto}</em>`);
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
+  // ── 9. Connect & Social Links ──
+  if (modules.socialLinks.enabled) {
+    const s = modules.socialLinks;
+    lines.push('  <!-- Connect & Collaborate -->');
+    lines.push('  <h2 align="center">🤝 Let\'s Connect & Collaborate</h2>');
+    lines.push('');
+    lines.push('  <div align="center">');
+
+    if (s.github) lines.push(`    <a href="https://github.com/${s.github}"><img src="https://img.shields.io/badge/GitHub-6a11cb?style=for-the-badge&logo=github&logoColor=white" /></a>`);
+    if (s.linkedin) lines.push(`    <a href="https://www.linkedin.com/in/${s.linkedin}"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>`);
+    if (s.email) lines.push(`    <a href="mailto:${s.email}"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>`);
+    if (s.behance) lines.push(`    <a href="https://www.behance.net/${s.behance}"><img src="https://img.shields.io/badge/Behance-1769FF?style=for-the-badge&logo=behance&logoColor=white" /></a>`);
+    if (s.instagram) lines.push(`    <a href="https://www.instagram.com/${s.instagram}"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>`);
+
+    lines.push('  </div>');
+    lines.push('');
+
+    if (s.scheduleMeetingUrl || s.responseTime) {
+      lines.push('  <div align="center">');
+      if (s.scheduleMeetingUrl) {
+        lines.push(`    <a href="${s.scheduleMeetingUrl}"><img src="https://img.shields.io/badge/Schedule_a_Meeting-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white" /></a>`);
+      }
+      if (s.responseTime) {
+        lines.push(`    <br /><img src="https://img.shields.io/badge/Response_Time-${encodeURIComponent(s.responseTime)}-brightgreen?style=flat-square" />`);
+      }
+      lines.push('  </div>');
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('');
+  }
+
+  // ── 10. Interactive Widgets (Daily Quote, Challenge, Philosophy) ──
+  if (modules.interactiveWidgets.enabled) {
+    if (modules.interactiveWidgets.showDailyDevQuote) {
+      lines.push('  <!-- Daily Dev Quote -->');
+      lines.push('  <h2>💬 Daily Dev Quote</h2>');
+      lines.push('');
+      lines.push('  <div align="center">');
+      lines.push('    <img src="https://github-readme-quotes-bay.vercel.app/quote?theme=dark&animation=grow_out_in&layout=default&font=Fira%20Code&bgColor=#00FFFF&textColor=7B2FF7&authorColor=8B5CF6&borderColor=6a11cb" alt="Dev Quote" />');
+      lines.push('  </div>');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+
+    if (modules.interactiveWidgets.showCodingChallenge) {
+      lines.push('  <!-- Dynamic Coding Challenge -->');
+      lines.push('  <h2 align="center">🧠 Daily Coding Challenge</h2>');
+      lines.push('  <div align="center">');
+      lines.push('    <details>');
+      lines.push('      <summary><b>🎯 Click to reveal today\'s challenge!</b></summary>');
+      lines.push('      <br />');
+      lines.push('      <div id="daily-challenge">');
+      lines.push('        **Challenge: Two Sum Problem**<br />');
+      lines.push('        **Difficulty:** 🟡 Medium<br />');
+      lines.push('        > Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to target.<br />');
+      lines.push('      </div>');
+      lines.push('    </details>');
+      lines.push('  </div>');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+
+    if (modules.interactiveWidgets.showPersonalPhilosophy && modules.interactiveWidgets.mantras.length > 0) {
+      lines.push('  <!-- Dynamic Personal Philosophy -->');
+      lines.push('  <h2 align="center">🌟 Personal Philosophy</h2>');
+      lines.push('');
+      lines.push('  <div align="center">');
+      lines.push('    <blockquote>');
+      lines.push('      <h3>🚀 My Developer Mantras</h3>');
+      lines.push('      <table>');
+      for (const mantra of modules.interactiveWidgets.mantras) {
+        lines.push(`        <tr><td>${mantra}</td></tr>`);
+      }
+      lines.push('      </table>');
+      lines.push('    </blockquote>');
+      lines.push('  </div>');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+  }
+
+  // ── 11. Footer Capsule ──
+  if (modules.footer.enabled) {
+    const closeEnc = encodeURIComponent(modules.footer.closingText || 'Thanks for visiting!');
+    lines.push(`  <div align="center">`);
+    lines.push(`    <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=150&section=footer&text=${closeEnc}&fontSize=40&fontAlignY=65&animation=twinkling&fontColor=fff" width="100%" alt="Footer Banner" />`);
+    lines.push('  </div>');
+    lines.push('');
+    lines.push('  <div align="center">');
+    lines.push('    <img src="https://img.shields.io/badge/Made%20with-❤️-6a11cb?style=for-the-badge" />');
+    lines.push(`    <img src="https://img.shields.io/badge/By-${encodeURIComponent(modules.footer.authorName || user)}-2575fc?style=for-the-badge" />`);
+    lines.push(`    <img src="https://img.shields.io/badge/${encodeURIComponent(modules.footer.statusBadgeText || 'Status-Beast Mode ON')}-8A2387?style=for-the-badge" />`);
+    lines.push('  </div>');
+  }
+
+  lines.push('</div>');
+
+  // Snake Actions Workflow YAML
+  const workflowYaml = `name: Generate Snake Animation
 
 on:
   schedule:
-    - cron: "0 0 * * *" # Runs every 24 hours
+    - cron: "0 0 * * *"
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
-  generate:
+  build:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
-      - name: Generate contribution snake SVG
-        uses: Platane/snk/svg-only@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Snake Animation
+        uses: Platane/snk@v3
         with:
-          github_user_name: ${username}
+          github_user_name: \${{ github.repository_owner }}
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
-      
-      - name: Push snake SVG to output branch
-        uses: crazy-max/ghaction-github-pages@v4
+
+      - name: Deploy to Output Branch
+        uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: output
           build_dir: dist
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 `;
-}
 
-// ── Compiler ──
-export function compileProfile(config: ProfileConfig): { markdown: string; workflowYaml?: string } {
-  const sections = [
-    renderHeader(config),
-    renderAboutMe(config),
-    renderTechStack(config),
-    renderFeaturedRepos(config),
-    renderGitHubStats(config),
-    renderSnake(config),
-    renderSocials(config),
-    renderFooter(config),
-  ].filter(s => s.trim().length > 0);
-
-  const markdown = sections.join('\n');
-  const workflowYaml = config.modules.snakeAnimation.enabled
-    ? generateSnakeWorkflow(config.username)
-    : undefined;
-
-  return { markdown, workflowYaml };
-}
-
-// ── Factory Defaults ──
-export function createDefaultModules(): ModuleConfig {
   return {
-    headerBanner: {
-      enabled: true,
-      headerStyle: 'waving-hand',
-      title: '',
-      subtitle: 'Full-Stack Developer • Open Source Creator',
-      typingLines: ['Building scalable web applications 🚀', 'Writing clean, elegant code ⚡', 'Open to exciting projects 🤝'],
-    },
-    aboutMe: {
-      enabled: true,
-      bioText: '',
-      showLocation: true,
-      showCompany: true,
-      showBlog: true,
-      quickFacts: {
-        currentWork: 'High-scale web applications',
-        learning: 'Cloud architectures & distributed systems',
-        collaborate: 'Open source developer tools',
-        askMe: 'TypeScript, React, Node.js, and System Design',
-        reachMe: 'email or social channels below',
-        funFact: 'I turn coffee into performant code ☕',
-      },
-    },
-    techStack: {
-      enabled: true,
-      style: 'for-the-badge',
-      categorize: true,
-      badges: ['typescript', 'react', 'nextdotjs', 'nodedotjs', 'tailwindcss', 'postgresql', 'docker', 'git'],
-    },
-    githubStats: {
-      enabled: true,
-      showGeneralStats: true,
-      showStreak: true,
-      showTopLangs: true,
-      showActivityGraph: true,
-      showTrophies: false,
-    },
-    featuredRepos: {
-      enabled: true,
-      repos: [],
-    },
-    snakeAnimation: {
-      enabled: true,
-    },
-    socialLinks: {
-      enabled: true,
-      github: '',
-      twitter: '',
-      linkedin: '',
-      portfolio: '',
-      discord: '',
-      youtube: '',
-      email: '',
-    },
-    footer: {
-      enabled: true,
-      showVisitorBadge: true,
-      quote: '💡 "Code is like humor. When you have to explain it, it is bad." — Cory House',
-    },
+    markdown: lines.join('\n'),
+    workflowYaml: modules.gameSuite.enabled ? workflowYaml : undefined,
   };
 }

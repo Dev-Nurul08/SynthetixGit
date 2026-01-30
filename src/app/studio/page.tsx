@@ -270,7 +270,7 @@ function StudioContent() {
             <span className="hidden sm:inline">.md</span>
           </button>
 
-          {modules.snakeAnimation.enabled && (
+          {modules.gameSuite.enabled && (
             <button
               type="button"
               onClick={handleDownloadSnake}

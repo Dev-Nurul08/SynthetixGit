@@ -45,7 +45,7 @@ export const useEditorStore = create<EditorState>()(
       workflowYaml: null,
       modules: createDefaultModules(),
       theme: 'github_dark' as ThemeId,
-      templateId: 'modern-developer' as TemplateId,
+      templateId: 'beast-mode-neon' as TemplateId,
 
       setTheme: (theme) => {
         set({ theme });
@@ -59,33 +59,67 @@ export const useEditorStore = create<EditorState>()(
         const current = get().modules;
         let updated: ModuleConfig = { ...current };
 
-        if (templateId === 'modern-developer') {
+        if (templateId === 'beast-mode-neon') {
           updated = {
             ...updated,
             headerBanner: {
               enabled: true,
-              headerStyle: 'waving-hand',
+              headerStyle: 'venom-capsule',
               title: profileData?.profile?.name || username,
-              subtitle: 'Full-Stack Developer • Open Source Creator',
-              typingLines: ['Building scalable web applications 🚀', 'Writing clean, performant TypeScript ⚡', 'Designing intuitive user interfaces 🎨'],
+              subtitle: 'Full-Stack & MERN Developer',
+              typingLines: [
+                'Diploma in Computer Student @ VidhyaDeep University 🎓',
+                'Frontend Ninja ⚡ Backend Explorer 🔍',
+                'JavaScript Enthusiast 💻 DSA Master 🏆',
+              ],
+              bannerColor: 'gradient',
             },
-            techStack: {
-              ...updated.techStack,
-              style: 'for-the-badge',
-              categorize: true,
-            },
-            githubStats: {
+            beastModeDashboard: {
               enabled: true,
-              showGeneralStats: true,
-              showStreak: true,
-              showTopLangs: true,
-              showActivityGraph: true,
-              showTrophies: false,
+              showProfileViews: true,
+              showGrowthMetrics: true,
+              showOpenToWork: true,
+              showHireMe: true,
+              showStreakCard: true,
+              showWakaTime: true,
+              email: 'shaikhnurul8200@gmail.com',
             },
-            snakeAnimation: { enabled: true },
+            githubAnalytics: {
+              enabled: true,
+              showProfileDetailsCard: true,
+              showReposPerLanguage: true,
+              showMostCommitLanguage: true,
+              showStatsCard: true,
+              showActivityWave: true,
+              showTrophies: true,
+              showNextAchievements: true,
+            },
+            educationAndSkills: {
+              ...updated.educationAndSkills,
+              enabled: true,
+            },
+            techArsenal: {
+              ...updated.techArsenal,
+              enabled: true,
+            },
           };
-          set({ templateId, theme: 'github_dark', modules: updated });
-        } else if (templateId === 'minimalist-clean') {
+          set({ templateId, theme: 'dracula', modules: updated });
+        } else if (templateId === 'cyberpunk-glitch') {
+          updated = {
+            ...updated,
+            headerBanner: {
+              enabled: true,
+              headerStyle: 'venom-capsule',
+              title: `${username} // CYBER_DEV`,
+              subtitle: '⚡ Autonomous Systems & Next-Gen Cloud Engineer',
+              typingLines: ['Compiling cyber systems 👾', 'Decentralized Architecture 🔐', 'High-Frequency Real-time Services ⚡'],
+              bannerColor: 'gradient',
+            },
+            beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+            githubAnalytics: { ...updated.githubAnalytics, enabled: true, showActivityWave: true, showTrophies: true },
+          };
+          set({ templateId, theme: 'cyberpunk', modules: updated });
+        } else if (templateId === 'minimal-monochrome') {
           updated = {
             ...updated,
             headerBanner: {
@@ -94,75 +128,16 @@ export const useEditorStore = create<EditorState>()(
               title: profileData?.profile?.name || username,
               subtitle: profileData?.profile?.bio || 'Software Engineer',
               typingLines: [],
+              bannerColor: 'black',
             },
-            techStack: {
-              ...updated.techStack,
-              style: 'flat-square',
-              categorize: false,
-            },
-            githubStats: {
-              enabled: true,
-              showGeneralStats: true,
-              showStreak: false,
-              showTopLangs: true,
-              showActivityGraph: false,
-              showTrophies: false,
-            },
-            snakeAnimation: { enabled: false },
-            footer: {
-              enabled: false,
-              showVisitorBadge: false,
-              quote: '',
-            },
+            beastModeDashboard: { ...updated.beastModeDashboard, enabled: false },
+            githubAnalytics: { ...updated.githubAnalytics, showProfileDetailsCard: false, showTrophies: false },
+            techArsenal: { ...updated.techArsenal, enabled: false },
           };
           set({ templateId, theme: 'nord', modules: updated });
-        } else if (templateId === 'cyber-engineer') {
-          updated = {
-            ...updated,
-            headerBanner: {
-              enabled: true,
-              headerStyle: 'capsule',
-              title: `${username} // SYS_ENG`,
-              subtitle: '⚡ Cloud Architect & Autonomous Systems Builder',
-              typingLines: ['Compiling next-gen systems 👾', 'Kubernetes, Cloud & Microservices 🛠️', 'Security & Decentralized Tech 🔐'],
-            },
-            techStack: {
-              ...updated.techStack,
-              style: 'for-the-badge',
-              categorize: true,
-            },
-            githubStats: {
-              enabled: true,
-              showGeneralStats: true,
-              showStreak: true,
-              showTopLangs: true,
-              showActivityGraph: true,
-              showTrophies: true,
-            },
-            snakeAnimation: { enabled: true },
-          };
-          set({ templateId, theme: 'tokyonight', modules: updated });
-        } else if (templateId === 'fullstack-lead') {
-          updated = {
-            ...updated,
-            headerBanner: {
-              enabled: true,
-              headerStyle: 'waving-hand',
-              title: `${profileData?.profile?.name || username}`,
-              subtitle: 'Lead Software Architect • Systems • Modern Web Tech',
-              typingLines: ['Architecting enterprise-scale platforms 💼', 'Mentoring & engineering best practices 📈'],
-            },
-            githubStats: {
-              enabled: true,
-              showGeneralStats: true,
-              showStreak: true,
-              showTopLangs: true,
-              showActivityGraph: true,
-              showTrophies: false,
-            },
-            snakeAnimation: { enabled: true },
-          };
-          set({ templateId, theme: 'dark', modules: updated });
+        } else {
+          // Default fallthrough preset update
+          set({ templateId, modules: updated });
         }
 
         get().regenerateMarkdown(username, profileData);
@@ -220,6 +195,7 @@ export const useEditorStore = create<EditorState>()(
                 avatarUrl: profileData.profile.avatarUrl,
                 followers: profileData.profile.followers,
                 publicRepos: profileData.profile.publicRepos,
+                createdAt: profileData.profile.createdAt,
               }
             : undefined,
         };
@@ -238,7 +214,7 @@ export const useEditorStore = create<EditorState>()(
           ? state.modules.techStack.badges
           : suggested.length > 0
             ? suggested
-            : ['typescript', 'react', 'nextdotjs', 'nodedotjs', 'tailwindcss', 'postgresql', 'docker', 'git'];
+            : ['javascript', 'typescript', 'react', 'nextdotjs', 'nodedotjs', 'express', 'mongodb', 'tailwindcss', 'git', 'docker'];
 
         const featuredRepos = profileData.pinnedRepos.map(r => ({
           name: r.name,
@@ -253,11 +229,11 @@ export const useEditorStore = create<EditorState>()(
           headerBanner: {
             ...state.modules.headerBanner,
             title: profileData.profile.name || username,
-            subtitle: profileData.profile.bio ? profileData.profile.bio.slice(0, 100) : state.modules.headerBanner.subtitle,
+            subtitle: profileData.profile.bio ? profileData.profile.bio.replace(/[\r\n]+/g, ' ').slice(0, 100) : state.modules.headerBanner.subtitle,
           },
           aboutMe: {
             ...state.modules.aboutMe,
-            bioText: profileData.profile.bio || '',
+            bioText: profileData.profile.bio ? profileData.profile.bio.replace(/[\r\n]+/g, ' ') : '',
             showLocation: !!profileData.profile.location,
             showCompany: !!profileData.profile.company,
             showBlog: !!profileData.profile.blog,
@@ -327,7 +303,7 @@ export const useEditorStore = create<EditorState>()(
       },
     }),
     {
-      name: 'synthetixgit-editor-storage-v2',
+      name: 'synthetixgit-editor-storage-v3',
       storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : {
         getItem: () => null,
         setItem: () => {},
