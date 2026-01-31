@@ -40,7 +40,14 @@ export interface ModuleConfig {
   // 1. Capsule / Waving Header
   headerBanner: {
     enabled: boolean;
-    headerStyle: 'venom-capsule' | 'waving-capsule' | 'minimal' | 'glitch' | 'retro-8bit';
+    headerStyle:
+      | 'venom-capsule'
+      | 'waving-capsule'
+      | 'cartoonish-3d'
+      | 'cyberpunk-glitch'
+      | 'terminal-prompt'
+      | 'handwritten-script'
+      | 'minimal';
     title: string;
     subtitle: string;
     typingLines: string[];
@@ -353,6 +360,14 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push(`  <img src="https://capsule-render.vercel.app/api?type=venom&color=gradient&customColorList=1,2,4,5,40&height=250&section=header&text=${titleEnc}&fontSize=65&animation=twinkling&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Fira%20Code&descFont=Roboto&textColor=FF4500&descColor=00FF7F&borderRadius=25" width="100%" alt="Header Banner" />`);
     } else if (modules.headerBanner.headerStyle === 'waving-capsule') {
       lines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=220&section=header&text=${titleEnc}&fontSize=50&animation=twinkling&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto" width="100%" alt="Header Banner" />`);
+    } else if (modules.headerBanner.headerStyle === 'cartoonish-3d') {
+      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=cartoonish-3d" width="100%" alt="3D Cartoonish Header" />`);
+    } else if (modules.headerBanner.headerStyle === 'cyberpunk-glitch') {
+      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=cyberpunk-glitch" width="100%" alt="Cyberpunk Glitch Header" />`);
+    } else if (modules.headerBanner.headerStyle === 'terminal-prompt') {
+      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=terminal-prompt" width="100%" alt="Terminal Header" />`);
+    } else if (modules.headerBanner.headerStyle === 'handwritten-script') {
+      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=handwritten-script" width="100%" alt="Signature Header" />`);
     } else if (modules.headerBanner.headerStyle === 'minimal') {
       lines.push(`  <h1>${modules.headerBanner.title || user}</h1>`);
       lines.push(`  <p><em>${modules.headerBanner.subtitle}</em></p>`);

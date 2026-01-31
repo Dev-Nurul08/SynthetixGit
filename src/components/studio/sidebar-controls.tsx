@@ -166,10 +166,14 @@ export function SidebarControls({
               <div className="space-y-3.5">
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1.5">Banner Style</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {[
                       { id: 'venom-capsule', label: 'Venom Capsule 🔥' },
                       { id: 'waving-capsule', label: 'Waving Capsule 🌊' },
+                      { id: 'cartoonish-3d', label: '3D Cartoonish 🎨' },
+                      { id: 'cyberpunk-glitch', label: 'Cyber Glitch 👾' },
+                      { id: 'terminal-prompt', label: 'Terminal Prompt 📟' },
+                      { id: 'handwritten-script', label: 'Handwritten ✍️' },
                       { id: 'minimal', label: 'Minimalist ⚡' },
                     ].map((style) => (
                       <button
