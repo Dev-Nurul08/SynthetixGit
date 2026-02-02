@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { BadgePicker } from '@/components/studio/badge-picker';
+import { CanvasPainter } from '@/components/studio/canvas-painter';
 import type { ModuleConfig, ThemeId, TemplateId } from '@/lib/template-engine';
 import {
   FiZap,
@@ -34,6 +35,7 @@ interface SidebarControlsProps {
 type TabKey =
   | 'templates'
   | 'header'
+  | 'canvas'
   | 'beast'
   | 'analytics'
   | 'education'
@@ -76,6 +78,7 @@ export function SidebarControls({
 
   const navTabs: { id: TabKey; label: string; icon: React.ReactNode }[] = [
     { id: 'templates', label: '15 Presets', icon: <FiZap size={14} className="text-amber-400" /> },
+    { id: 'canvas', label: 'Canvas Painter', icon: <FiAward size={14} className="text-emerald-400" /> },
     { id: 'header', label: 'Header', icon: <FiSliders size={14} /> },
     { id: 'beast', label: 'Dashboard', icon: <FiActivity size={14} className="text-purple-400" /> },
     { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 size={14} /> },
@@ -144,6 +147,13 @@ export function SidebarControls({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── TAB 1B: CANVAS PAINTER ── */}
+        {activeTab === 'canvas' && (
+          <div className="space-y-4">
+            <CanvasPainter username="Dev-Nurul08" />
           </div>
         )}
 
