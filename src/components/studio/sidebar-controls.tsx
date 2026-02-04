@@ -520,15 +520,41 @@ export function SidebarControls({
             </div>
 
             {modules.gameSuite.enabled && (
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Banner Motto Quote</label>
-                <input
-                  type="text"
-                  value={modules.gameSuite.motto}
-                  onChange={(e) => onUpdateModule('gameSuite', { motto: e.target.value })}
-                  placeholder="Code. Commit. Conquer."
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
-                />
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Select Interactive Game</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'snake', label: 'Snake 🐍' },
+                      { id: 'breakout', label: 'Breaker 🧱' },
+                      { id: 'pacman', label: 'Pac-Man 👾' },
+                    ].map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => onUpdateModule('gameSuite', { gameType: g.id as any })}
+                        className={`py-2 px-2 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
+                          modules.gameSuite.gameType === g.id
+                            ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Banner Motto Quote</label>
+                  <input
+                    type="text"
+                    value={modules.gameSuite.motto}
+                    onChange={(e) => onUpdateModule('gameSuite', { motto: e.target.value })}
+                    placeholder="Code. Commit. Conquer."
+                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
             )}
           </div>

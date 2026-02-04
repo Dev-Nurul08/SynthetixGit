@@ -630,15 +630,15 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
 
   // ── 8. Breakout / Snake Game Suite ──
   if (modules.gameSuite.enabled) {
-    lines.push('  <!-- 🎮 Interactive Game Suite Banner -->');
-    lines.push('  <h2 align="center">Break-Out Readme</h2>');
+    const gType = modules.gameSuite.gameType || 'snake';
+    const gTitle = gType === 'breakout' ? 'Graph Brick Breaker' : gType === 'pacman' ? 'Pac-Man Commit Run' : 'Contribution Snake';
+    lines.push('  <!-- 🎮 Interactive Game Suite Banner (Click to Play Live in Browser) -->');
+    lines.push(`  <h2 align="center">🎮 Play ${gTitle} (Click to Play)</h2>`);
     lines.push('');
-    lines.push('  <div align="center" style="background: linear-gradient(135deg, #2c3e50, #4a6572); padding: 25px; border-radius: 20px; margin: 20px 0;">');
-    lines.push('    <picture>');
-    lines.push(`      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake-dark.svg" />`);
-    lines.push(`      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
-    lines.push(`      <img alt="Breakout & Snake Game" src="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
-    lines.push('    </picture>');
+    lines.push('  <div align="center">');
+    lines.push(`    <a href="https://synthetixgit.vercel.app/play/${user}/${gType}">`);
+    lines.push(`      <img src="https://synthetixgit.vercel.app/api/svg/game-banner?username=${user}&game=${gType}" width="100%" alt="${gTitle}" />`);
+    lines.push('    </a>');
     lines.push('    <br />');
     lines.push(`    <em>${modules.gameSuite.motto}</em>`);
     lines.push('  </div>');
