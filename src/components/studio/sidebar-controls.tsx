@@ -157,7 +157,7 @@ export function SidebarControls({
           </div>
         )}
 
-        {/* ── TAB 2: HEADER BANNER ── */}
+        {/* ── TAB 2: HEADER BANNER & DIVIDERS ── */}
         {activeTab === 'header' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
@@ -170,6 +170,52 @@ export function SidebarControls({
                 onToggle={(v) => onUpdateModule('headerBanner', { enabled: v })}
                 label=""
               />
+            </div>
+
+            {/* Section Divider Engine (Phase 6) */}
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-white block">Animated SVG Dividers</span>
+                  <span className="text-[11px] text-slate-400">Replace static lines with flowing SVG animations</span>
+                </div>
+                <ToggleSwitch
+                  enabled={modules.sectionDivider?.enabled ?? true}
+                  onToggle={(v) => onUpdateModule('sectionDivider', { enabled: v })}
+                  label=""
+                />
+              </div>
+
+              {(modules.sectionDivider?.enabled ?? true) && (
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Divider Animation Style</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'rainbow-gradient', label: 'Rainbow Flow 🌈' },
+                      { id: 'snake-crawl', label: 'Snake Crawl 🐍' },
+                      { id: 'neon-laser-shimmer', label: 'Laser Node ⚡' },
+                      { id: 'soundwave-eq', label: 'Soundwave EQ 🎵' },
+                      { id: 'cyber-circuit', label: 'Cyber Circuit 👾' },
+                      { id: 'particle-sparkle', label: 'Sparkles ✨' },
+                      { id: 'retro-dashed-terminal', label: 'Terminal Dash 📟' },
+                      { id: 'curved-wave', label: 'Curved Wave 🌊' },
+                    ].map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => onUpdateModule('sectionDivider', { style: d.id as any })}
+                        className={`py-2 px-2.5 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
+                          modules.sectionDivider?.style === d.id
+                            ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {modules.headerBanner.enabled && (

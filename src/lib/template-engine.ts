@@ -54,6 +54,21 @@ export interface ModuleConfig {
     bannerColor: string;
   };
 
+  // Section Divider Engine (Phase 6)
+  sectionDivider: {
+    enabled: boolean;
+    style:
+      | 'rainbow-gradient'
+      | 'snake-crawl'
+      | 'neon-laser-shimmer'
+      | 'soundwave-eq'
+      | 'cyber-circuit'
+      | 'particle-sparkle'
+      | 'retro-dashed-terminal'
+      | 'curved-wave'
+      | 'markdown-line';
+  };
+
   // 2. Beast Mode Multi-Column Stats Dashboard
   beastModeDashboard: {
     enabled: boolean;
@@ -207,7 +222,7 @@ export function createDefaultModules(): ModuleConfig {
     headerBanner: {
       enabled: true,
       headerStyle: 'venom-capsule',
-      title: 'Dev-Nurul',
+      title: 'Nurul Shaikh',
       subtitle: 'Full-Stack & MERN Developer',
       typingLines: [
         'Diploma in Computer Student @ VidhyaDeep University 🎓',
@@ -216,6 +231,10 @@ export function createDefaultModules(): ModuleConfig {
         'Building scalable web platforms 🚀',
       ],
       bannerColor: 'gradient',
+    },
+    sectionDivider: {
+      enabled: true,
+      style: 'rainbow-gradient',
     },
     beastModeDashboard: {
       enabled: true,
@@ -343,9 +362,25 @@ export function createDefaultModules(): ModuleConfig {
   };
 }
 
+function renderDivider(modules: ModuleConfig): string {
+  if (!modules.sectionDivider || !modules.sectionDivider.enabled) {
+    return '---';
+  }
+  if (modules.sectionDivider.style === 'markdown-line') {
+    return '---';
+  }
+  return `<img src="https://synthetixgit.vercel.app/api/svg/divider?style=${modules.sectionDivider.style}" width="100%" alt="Section Divider" />`;
+}
+
+export function generateProfileMarkdown(config: ProfileConfig): string {
+  return compileProfile(config).markdown;
+}
+
 export function compileProfile(config: ProfileConfig): { markdown: string; workflowYaml?: string } {
-  const { username, modules } = config;
-  const user = username || 'developer';
+  const { username, templateId, theme, modules } = config;
+  const user = username || 'Dev-Nurul08';
+  const divider = renderDivider(modules);
+
   const lines: string[] = [];
 
   lines.push('<div align="center">');
@@ -441,7 +476,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('    </table>');
     lines.push('  </div>');
     lines.push('');
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -473,7 +508,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('');
     }
 
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -545,7 +580,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('  </table>');
     lines.push('  </div>');
     lines.push('');
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -578,7 +613,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('    </table>');
     lines.push('  </div>');
     lines.push('');
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -600,7 +635,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('    </div>');
     lines.push('  </details>');
     lines.push('');
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -624,7 +659,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('');
     }
 
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -643,7 +678,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push(`    <em>${modules.gameSuite.motto}</em>`);
     lines.push('  </div>');
     lines.push('');
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -676,7 +711,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('');
     }
 
-    lines.push('---');
+    lines.push(`  ${divider}`);
     lines.push('');
   }
 
@@ -690,7 +725,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('    <img src="https://github-readme-quotes-bay.vercel.app/quote?theme=dark&animation=grow_out_in&layout=default&font=Fira%20Code&bgColor=#00FFFF&textColor=7B2FF7&authorColor=8B5CF6&borderColor=6a11cb" alt="Dev Quote" />');
       lines.push('  </div>');
       lines.push('');
-      lines.push('---');
+      lines.push(`  ${divider}`);
       lines.push('');
     }
 
@@ -709,7 +744,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('    </details>');
       lines.push('  </div>');
       lines.push('');
-      lines.push('---');
+      lines.push(`  ${divider}`);
       lines.push('');
     }
 
