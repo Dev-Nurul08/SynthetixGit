@@ -209,7 +209,7 @@ export const useEditorStore = create<EditorState>()(
         const username = profileData.profile.username;
 
         const langNames = profileData.stats.topLanguages.map((l) => l.name);
-        const suggested = suggestBadgesFromLanguages(langNames).map((b) => b.slug);
+        const suggested = suggestBadgesFromLanguages(langNames);
         const finalBadges = state.modules.techStack.badges.length > 0
           ? state.modules.techStack.badges
           : suggested.length > 0

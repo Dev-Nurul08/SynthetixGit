@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { BadgePicker } from '@/components/studio/badge-picker';
 import { CanvasPainter } from '@/components/studio/canvas-painter';
+import { TrophyCustomizer } from '@/components/studio/trophy-customizer';
 import type { ModuleConfig, ThemeId, TemplateId } from '@/lib/template-engine';
 import {
   FiZap,
@@ -344,9 +345,15 @@ export function SidebarControls({
           </div>
         )}
 
-        {/* ── TAB 4: GITHUB ANALYTICS & SUMMARY CARDS ── */}
+        {/* ── TAB 4: GITHUB ANALYTICS & TROPHIES ── */}
         {activeTab === 'analytics' && (
           <div className="space-y-4">
+            <TrophyCustomizer
+              theme={theme}
+              showTrophies={modules.githubAnalytics.showTrophies}
+              showNextAchievements={modules.githubAnalytics.showNextAchievements}
+              onUpdate={(data) => onUpdateModule('githubAnalytics', data)}
+            />
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
               <div>
                 <span className="text-xs font-bold text-white block">GitHub Performance Cards</span>
