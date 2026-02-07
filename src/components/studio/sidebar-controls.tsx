@@ -5,6 +5,8 @@ import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { BadgePicker } from '@/components/studio/badge-picker';
 import { CanvasPainter } from '@/components/studio/canvas-painter';
 import { TrophyCustomizer } from '@/components/studio/trophy-customizer';
+import { ProjectReadmeConfigurator } from '@/components/studio/project-readme-configurator';
+import { defaultProjectConfig, type ProjectReadmeConfig } from '@/lib/project-readme-engine';
 import type { ModuleConfig, ThemeId, TemplateId } from '@/lib/template-engine';
 import {
   FiZap,
@@ -19,6 +21,7 @@ import {
   FiActivity,
   FiAward,
   FiPlay,
+  FiBox,
 } from 'react-icons/fi';
 
 interface SidebarControlsProps {
@@ -31,12 +34,14 @@ interface SidebarControlsProps {
   onAddBadge: (slug: string) => void;
   onRemoveBadge: (slug: string) => void;
   onApplyRolePreset?: (role: 'frontend' | 'backend' | 'fullstack' | 'devops' | 'ai-ml' | 'mobile') => void;
+  onApplyProjectMarkdown?: (markdown: string) => void;
 }
 
 type TabKey =
   | 'templates'
-  | 'header'
+  | 'project'
   | 'canvas'
+  | 'header'
   | 'beast'
   | 'analytics'
   | 'education'
@@ -74,11 +79,14 @@ export function SidebarControls({
   onAddBadge,
   onRemoveBadge,
   onApplyRolePreset,
+  onApplyProjectMarkdown,
 }: SidebarControlsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('templates');
+  const [projectConfig, setProjectConfig] = useState<ProjectReadmeConfig>(defaultProjectConfig);
 
   const navTabs: { id: TabKey; label: string; icon: React.ReactNode }[] = [
     { id: 'templates', label: '15 Presets', icon: <FiZap size={14} className="text-amber-400" /> },
+    { id: 'project', label: 'Repo Mode', icon: <FiBox size={14} className="text-blue-400" /> },
     { id: 'canvas', label: 'Canvas Painter', icon: <FiAward size={14} className="text-emerald-400" /> },
     { id: 'header', label: 'Header', icon: <FiSliders size={14} /> },
     { id: 'beast', label: 'Dashboard', icon: <FiActivity size={14} className="text-purple-400" /> },
@@ -148,6 +156,17 @@ export function SidebarControls({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── TAB 1A: PROJECT REPO MODE (PHASE 8) ── */}
+        {activeTab === 'project' && (
+          <div className="space-y-4">
+            <ProjectReadmeConfigurator
+              config={projectConfig}
+              onChange={setProjectConfig}
+              onApplyMarkdown={(md) => onApplyProjectMarkdown?.(md)}
+            />
           </div>
         )}
 

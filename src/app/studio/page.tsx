@@ -42,6 +42,7 @@ function StudioContent() {
     applyTemplatePreset,
     applyRolePreset,
     updateModule,
+    setMarkdown,
     addBadge,
     removeBadge,
     regenerateMarkdown,
@@ -314,6 +315,7 @@ function StudioContent() {
               onAddBadge={addBadge}
               onRemoveBadge={removeBadge}
               onApplyRolePreset={applyRolePreset}
+              onApplyProjectMarkdown={(md: string) => setMarkdown(md)}
             />
           </div>
         </aside>
