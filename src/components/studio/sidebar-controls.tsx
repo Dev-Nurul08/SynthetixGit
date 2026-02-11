@@ -694,19 +694,28 @@ export function SidebarControls({
           <div className="space-y-4">
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
               <ToggleSwitch
+                enabled={modules.interactiveWidgets.showSpotify ?? false}
+                onToggle={(v) => onUpdateModule('interactiveWidgets', { showSpotify: v })}
+                label="Spotify Live Now-Playing Player 🎵"
+                description="Animated equalizer & real-time track card"
+              />
+              <ToggleSwitch
                 enabled={modules.interactiveWidgets.showDailyDevQuote}
                 onToggle={(v) => onUpdateModule('interactiveWidgets', { showDailyDevQuote: v })}
-                label="Show Daily Dev Quote Card"
+                label="Daily Dev Quote Card 💬"
+                description="Random inspirational developer quote with custom theme"
               />
               <ToggleSwitch
                 enabled={modules.interactiveWidgets.showCodingChallenge}
                 onToggle={(v) => onUpdateModule('interactiveWidgets', { showCodingChallenge: v })}
-                label="Show Interactive Daily Challenge Dropdown"
+                label="Interactive Daily Challenge 🏆"
+                description="Collapsible dropdown with Two Sum algorithm and JS solution"
               />
               <ToggleSwitch
                 enabled={modules.interactiveWidgets.showPersonalPhilosophy}
                 onToggle={(v) => onUpdateModule('interactiveWidgets', { showPersonalPhilosophy: v })}
-                label="Show Personal Philosophy & Mantras"
+                label="Personal Philosophy & Mantras 💡"
+                description="Developer mindset & guiding principles table"
               />
             </div>
           </div>

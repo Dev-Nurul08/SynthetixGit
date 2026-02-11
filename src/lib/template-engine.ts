@@ -178,13 +178,14 @@ export interface ModuleConfig {
     responseTime: string;
   };
 
-  // 11. Daily Dev Quote & Collapsible Coding Challenge
+  // 11. Interactive Widgets (Quotes, Mantras, Philosophy, Spotify)
   interactiveWidgets: {
     enabled: boolean;
     showDailyDevQuote: boolean;
     showCodingChallenge: boolean;
     showVisitorMap: boolean;
     showPersonalPhilosophy: boolean;
+    showSpotify?: boolean;
     mantras: string[];
   };
 
@@ -710,13 +711,23 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push('  </div>');
       lines.push('');
     }
-
     lines.push(`  ${divider}`);
     lines.push('');
   }
 
-  // ── 10. Interactive Widgets (Daily Quote, Challenge, Philosophy) ──
+  // ── 10. Interactive Widgets (Daily Dev Quote, Spotify, Coding Challenge, Visitor Map, Mantras) ──
   if (modules.interactiveWidgets.enabled) {
+    if (modules.interactiveWidgets.showSpotify) {
+      lines.push('  <!-- 🎵 Spotify Live Music Player -->');
+      lines.push('  <h2 align="center">🎵 Currently Vibing To</h2>');
+      lines.push('  <div align="center">');
+      lines.push('    <img src="https://synthetixgit.vercel.app/api/svg/spotify?track=Deep%20Focus%20%26%20Lofi%20Coding&artist=SynthetixGit%20Vibes" width="450" alt="Spotify Player" />');
+      lines.push('  </div>');
+      lines.push('');
+      lines.push(`  ${divider}`);
+      lines.push('');
+    }
+
     if (modules.interactiveWidgets.showDailyDevQuote) {
       lines.push('  <!-- Daily Dev Quote -->');
       lines.push('  <h2>💬 Daily Dev Quote</h2>');
