@@ -9,6 +9,7 @@ import { SidebarControls } from '@/components/studio/sidebar-controls';
 import { MarkdownEditor } from '@/components/studio/markdown-editor';
 import { MarkdownPreview } from '@/components/studio/markdown-preview';
 import { ProfileSkeleton } from '@/components/ui/loading-skeleton';
+import { DeployModal } from '@/components/studio/deploy-modal';
 import {
   FiCode,
   FiEye,
@@ -19,6 +20,7 @@ import {
   FiCheck,
   FiGithub,
   FiColumns,
+  FiUploadCloud,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -53,6 +55,7 @@ function StudioContent() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('controls');
   const [copied, setCopied] = useState(false);
   const [scanInput, setScanInput] = useState('');
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
 
   // Initial load from URL query
   useEffect(() => {
@@ -254,6 +257,16 @@ function StudioContent() {
 
           <button
             type="button"
+            onClick={() => setIsDeployModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-lg shadow-blue-600/30"
+            title="1-Click Deploy to GitHub Profile"
+          >
+            <FiUploadCloud size={14} />
+            <span className="hidden sm:inline">1-Click Deploy</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleCopy}
             className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-lg shadow-blue-600/25"
           >
@@ -371,6 +384,14 @@ function StudioContent() {
           )}
         </div>
       </div>
+      {/* Deploy Modal */}
+      <DeployModal
+        isOpen={isDeployModalOpen}
+        onClose={() => setIsDeployModalOpen(false)}
+        username={activeUser || 'developer'}
+        markdown={markdown}
+        workflowYaml={workflowYaml}
+      />
     </div>
   );
 }
