@@ -70,6 +70,51 @@
   margin-bottom: 6px;
 }
 
+/* ── Glassmorphism & Cyber Glow Tokens (Milestone 16 Feb 2026) ── */
+.glass-panel {
+  background: rgba(13, 17, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-glow {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.08);
+}
+
+.neon-border-pink {
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.12);
+}
+
+.neon-border-green {
+  border: 1px solid rgba(57, 211, 83, 0.3);
+  box-shadow: 0 0 20px rgba(57, 211, 83, 0.12);
+}
+
+/* Custom Studio Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(13, 17, 23, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .github-readme-render blockquote {
   padding: 8px 16px;
   color: #8b949e;
