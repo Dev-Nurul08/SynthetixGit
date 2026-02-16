@@ -2,9 +2,12 @@
  * SynthetixGit — World-Class Profile Template & Compiler Engine (Phase 2)
  * Supports 15+ rich presets, venom capsule headers, beast mode dashboards,
  * skillicons matrices, LeetCode cards, WakaTime embeds, and interactive widgets.
+ *
+ * Each template now uses a unique ThemeColorConfig for visually distinct output.
  */
 
 import { BADGE_REGISTRY } from './badge-registry';
+import { getThemeColors, type ThemeColorConfig } from './theme-colors';
 
 export type ThemeId =
   | 'github_dark'
@@ -216,6 +219,9 @@ export interface ModuleConfig {
     authorName: string;
     statusBadgeText: string;
   };
+
+  // Section Ordering (Block Builder)
+  sectionOrder?: string[];
 }
 
 export interface ProfileConfig {
@@ -378,14 +384,54 @@ export function createDefaultModules(): ModuleConfig {
       authorName: 'Nurul Shaikh',
       statusBadgeText: 'Status-Beast Mode ON',
     },
+    sectionOrder: [
+      'header',
+      'beastMode',
+      'analytics',
+      'education',
+      'arsenal',
+      'activity',
+      'trophies',
+      'game',
+      'about',
+      'social',
+      'widgets',
+      'footer',
+    ],
   };
 }
 
-function renderDivider(modules: ModuleConfig): string {
+export const DEFAULT_SECTION_ORDER = [
+  'header',
+  'beastMode',
+  'analytics',
+  'education',
+  'arsenal',
+  'activity',
+  'trophies',
+  'game',
+  'about',
+  'social',
+  'widgets',
+  'footer',
+];
+
+function renderDivider(modules: ModuleConfig, tc: ThemeColorConfig): string {
   if (!modules.sectionDivider || !modules.sectionDivider.enabled || modules.sectionDivider.style === 'markdown-line') {
     return '---';
   }
-  return '<img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=1,2,4,5,40&height=4&section=header" width="100%" alt="Section Divider" />';
+  const style = modules.sectionDivider.style || tc.dividerStyle || 'rainbow-gradient';
+  
+  if (style === 'retro-dashed-terminal') {
+    return '```\n────────────────────────────────────────────────────────────────────────────\n```';
+  }
+  if (style === 'cyber-circuit' || style === 'neon-laser-shimmer') {
+    return `<img src="https://capsule-render.vercel.app/api?type=slice&color=${tc.capsule.color}&customColorList=${tc.capsule.customColorList || '0,2,4,6,30'}&height=4&section=header" width="100%" alt="Section Divider" />`;
+  }
+  if (style === 'curved-wave') {
+    return `<img src="https://capsule-render.vercel.app/api?type=waving&color=${tc.capsule.color}&customColorList=${tc.capsule.customColorList || '12,14,16,18,20'}&height=6&section=header" width="100%" alt="Section Divider" />`;
+  }
+  return `<img src="https://capsule-render.vercel.app/api?type=rect&color=${tc.capsule.color}&customColorList=${tc.capsule.customColorList || '1,2,4,5,40'}&height=4&section=header" width="100%" alt="Section Divider" />`;
 }
 
 export function generateProfileMarkdown(config: ProfileConfig): string {
@@ -393,417 +439,519 @@ export function generateProfileMarkdown(config: ProfileConfig): string {
 }
 
 export function compileProfile(config: ProfileConfig): { markdown: string; workflowYaml?: string } {
-  const { username, templateId, theme, modules } = config;
+  const { username, templateId, modules } = config;
   const user = username || 'Dev-Nurul08';
-  const divider = renderDivider(modules);
+  const tc = getThemeColors(templateId || 'beast-mode-neon');
+  const divider = renderDivider(modules, tc);
 
   const lines: string[] = [];
-
   lines.push('<div align="center">');
   lines.push('');
 
-  // ── 1. Capsule Header ──
-  if (modules.headerBanner.enabled) {
-    const titleEnc = encodeURIComponent(modules.headerBanner.title || user);
-    const subEnc = encodeURIComponent(modules.headerBanner.subtitle || 'Full-Stack Developer');
-    
-    if (modules.headerBanner.headerStyle === 'venom-capsule') {
-      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=venom&color=gradient&customColorList=1,2,4,5,40&height=250&section=header&text=${titleEnc}&fontSize=65&animation=twinkling&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Fira%20Code&descFont=Roboto&textColor=FF4500&descColor=00FF7F&borderRadius=25" width="100%" alt="Header Banner" />`);
-    } else if (modules.headerBanner.headerStyle === 'waving-capsule') {
-      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=220&section=header&text=${titleEnc}&fontSize=50&animation=twinkling&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto" width="100%" alt="Header Banner" />`);
-    } else if (modules.headerBanner.headerStyle === 'cartoonish-3d' || modules.headerBanner.headerStyle === 'cyberpunk-glitch') {
-      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=slice&color=gradient&customColorList=0,2,4,6,30&height=230&section=header&text=${titleEnc}&fontSize=60&animation=fadeIn&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Orbitron&descFont=Fira%20Code&textColor=00FFFF&descColor=39D353" width="100%" alt="Header Banner" />`);
-    } else if (modules.headerBanner.headerStyle === 'terminal-prompt') {
-      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=cylinder&color=0:0d1117,100:161b22&height=200&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto&textColor=38EF7D&descColor=00FFFF" width="100%" alt="Terminal Header" />`);
-    } else if (modules.headerBanner.headerStyle === 'handwritten-script') {
-      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=10,20,30,40&height=220&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Kalam&descFont=Roboto&textColor=FFD700&descColor=E2E8F0" width="100%" alt="Signature Header" />`);
-    } else {
-      lines.push(`  <h1>${modules.headerBanner.title || user}</h1>`);
-      lines.push(`  <p><em>${modules.headerBanner.subtitle}</em></p>`);
-    }
+  const order = modules.sectionOrder && modules.sectionOrder.length > 0
+    ? modules.sectionOrder
+    : DEFAULT_SECTION_ORDER;
 
-    lines.push('');
+  // Build section renderers
+  const sectionRenderers: Record<string, () => string[]> = {
+    // ── 1. Capsule Header ──
+    header: () => {
+      if (!modules.headerBanner.enabled) return [];
+      const secLines: string[] = [];
+      const titleEnc = encodeURIComponent(modules.headerBanner.title || user);
+      const subEnc = encodeURIComponent(modules.headerBanner.subtitle || 'Full-Stack Developer');
+      const hStyle = modules.headerBanner.headerStyle;
+      const c = tc.capsule;
 
-    // Typing SVG lines
-    if (modules.headerBanner.typingLines.length > 0) {
-      const typingParam = encodeURIComponent(modules.headerBanner.typingLines.join(';'));
-      lines.push('  <!-- Animated Profile Typing Header -->');
-      lines.push('  <div align="center">');
-      lines.push(`    <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=25&duration=3000&pause=1000&color=gradient&customColorList=0,4,4,8,30&center=true&vCenter=true&multiline=true&width=800&height=100&lines=${typingParam}" alt="Typing SVG" />`);
-      lines.push('  </div>');
-      lines.push('');
-    }
-  }
-
-  // ── 2. Beast Mode Stats Dashboard Grid ──
-  if (modules.beastModeDashboard.enabled) {
-    lines.push('  <!-- BEAST MODE STATS DASHBOARD: Live Multi-Column Matrix -->');
-    lines.push('  <div align="center">');
-    lines.push('    <h2 align="center" style="font-family: \'Orbitron\', sans-serif; color: #8a2be2; margin: 20px 0;">');
-    lines.push('      📊 Beast Mode Stats Dashboard');
-    lines.push('    </h2>');
-    lines.push('    <table style="width: 100%; border-collapse: collapse; margin: 20px 0">');
-    lines.push('      <tr>');
-
-    if (modules.beastModeDashboard.showProfileViews) {
-      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #8a2be2, #ba55d3); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #8a2be2;">');
-      lines.push(`          <img src="https://komarev.com/ghpvc/?username=${user}&color=8A2BE2&style=flat-square&label=Profile%20Views" alt="Profile Views" />`);
-      lines.push('          <br /><strong style="color: #00ffff; font-family: \'Fira Code\'">🚀 Live Counter</strong>');
-      lines.push('        </td>');
-    }
-
-    if (modules.beastModeDashboard.showGrowthMetrics) {
-      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #ff1493, #ff69b4); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #ff1493;">');
-      lines.push(`          <img src="https://img.shields.io/github/followers/${user}?style=flat-square&color=FF1493&label=Followers&logo=person-add" alt="Followers" />`);
-      lines.push(`          <img src="https://img.shields.io/github/stars/${user}?style=flat-square&color=FF69B4&label=Stars&logo=star" alt="Stars" />`);
-      lines.push('          <br /><strong style="color: #ffd700; font-family: \'Fira Code\'">📈 Growth Metrics</strong>');
-      lines.push('        </td>');
-    }
-
-    if (modules.beastModeDashboard.showOpenToWork) {
-      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #00ff7f, #32cd32); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #00ff7f;">');
-      lines.push('          <img src="https://img.shields.io/badge/Open%20to%20Work-✅%20YES-00FF7F?style=flat-square&logo=briefcase" alt="Open to Work" />');
-      if (modules.beastModeDashboard.email) {
-        lines.push(`          <br /><a href="mailto:${modules.beastModeDashboard.email}"><img src="https://img.shields.io/badge/Hire%20Me-🚀%20Click%20Here-FF4500?style=flat-square&logo=rocket&logoColor=white" alt="Hire Me" /></a>`);
+      if (hStyle === 'venom-capsule' || (!hStyle && c.type === 'venom')) {
+        secLines.push(`  <img src="https://capsule-render.vercel.app/api?type=venom&color=${c.color}&customColorList=${c.customColorList || '1,2,4,5,40'}&height=250&section=header&text=${titleEnc}&fontSize=65&animation=${c.animation}&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=${encodeURIComponent(c.font)}&descFont=${encodeURIComponent(c.descFont)}&textColor=${c.textColor}&descColor=${c.descColor}&borderRadius=25" width="100%" alt="Header Banner" />`);
+      } else if (hStyle === 'waving-capsule' || (!hStyle && c.type === 'waving')) {
+        secLines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=${c.color}&customColorList=${c.customColorList || '1,2,4,5,40'}&height=220&section=header&text=${titleEnc}&fontSize=50&animation=${c.animation}&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=${encodeURIComponent(c.font)}&descFont=${encodeURIComponent(c.descFont)}&textColor=${c.textColor}&descColor=${c.descColor}" width="100%" alt="Header Banner" />`);
+      } else if (hStyle === 'cartoonish-3d' || hStyle === 'cyberpunk-glitch' || (!hStyle && c.type === 'slice')) {
+        secLines.push(`  <img src="https://capsule-render.vercel.app/api?type=slice&color=${c.color}&customColorList=${c.customColorList || '0,2,4,6,30'}&height=230&section=header&text=${titleEnc}&fontSize=60&animation=${c.animation}&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=${encodeURIComponent(c.font)}&descFont=${encodeURIComponent(c.descFont)}&textColor=${c.textColor}&descColor=${c.descColor}" width="100%" alt="Header Banner" />`);
+      } else if (hStyle === 'terminal-prompt' || (!hStyle && c.type === 'cylinder')) {
+        secLines.push(`  <img src="https://capsule-render.vercel.app/api?type=cylinder&color=${c.color}&height=200&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=${encodeURIComponent(c.font)}&descFont=${encodeURIComponent(c.descFont)}&textColor=${c.textColor}&descColor=${c.descColor}" width="100%" alt="Terminal Header" />`);
+      } else if (hStyle === 'handwritten-script' || (!hStyle && c.type === 'soft')) {
+        secLines.push(`  <img src="https://capsule-render.vercel.app/api?type=soft&color=${c.color}&customColorList=${c.customColorList || '10,20,30,40'}&height=220&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=${encodeURIComponent(c.font)}&descFont=${encodeURIComponent(c.descFont)}&textColor=${c.textColor}&descColor=${c.descColor}" width="100%" alt="Signature Header" />`);
+      } else {
+        secLines.push(`  <h1>${modules.headerBanner.title || user}</h1>`);
+        secLines.push(`  <p><em>${modules.headerBanner.subtitle}</em></p>`);
       }
-      lines.push('          <br /><strong style="color: #000; font-family: \'Fira Code\'">💼 Professional Status</strong>');
-      lines.push('        </td>');
-    }
 
-    if (modules.beastModeDashboard.showStreakCard) {
-      lines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #8a2be2, #4b0082); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #8a2be2;">');
-      lines.push(`          <img src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=dark&hide_border=true&stroke=0000&background=0d1117&ring=00FFFF&fire=FF4500&currStreakLabel=8A2BE2&sideLabels=00FF7F&dates=8A2BE2" alt="Streak Stats" />`);
-      lines.push('          <br /><strong style="color: #ba55d3; font-family: \'Fira Code\'">🔥 Contribution Streak</strong>');
-      lines.push('        </td>');
-    }
+      secLines.push('');
 
-    lines.push('      </tr>');
-
-    if (modules.beastModeDashboard.showWakaTime) {
-      lines.push('      <tr>');
-      lines.push('        <td align="center" colspan="4" style="padding: 10px">');
-      lines.push(`          <img src="https://github-readme-stats.vercel.app/api/wakatime?username=${user}&color=black&theme=dark&hide_border=true" alt="Practice Time." />`);
-      lines.push('        </td>');
-      lines.push('      </tr>');
-    }
-
-    lines.push('    </table>');
-    lines.push('  </div>');
-    lines.push('');
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
-
-  // ── 3. GitHub Performance Summary Cards ──
-  if (modules.githubAnalytics.enabled) {
-    lines.push('  <!-- GitHub Account Performance Dashboard -->');
-    lines.push('  <h2 align="center">⚡ GitHub Performance Dashboard</h2>');
-    lines.push('');
-    
-    if (modules.githubAnalytics.showProfileDetailsCard) {
-      lines.push('  <div align="center">');
-      lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${user}&theme=github_dark" alt="Profile Details" />`);
-      lines.push('  </div>');
-      lines.push('');
-    }
-
-    if (modules.githubAnalytics.showReposPerLanguage || modules.githubAnalytics.showMostCommitLanguage || modules.githubAnalytics.showStatsCard) {
-      lines.push('  <div align="center">');
-      if (modules.githubAnalytics.showReposPerLanguage) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${user}&theme=dark" width="32%" alt="Repos per Language" />`);
+      // Typing SVG lines
+      if (modules.headerBanner.typingLines.length > 0) {
+        const typingParam = encodeURIComponent(modules.headerBanner.typingLines.join(';'));
+        secLines.push('  <!-- Animated Profile Typing Header -->');
+        secLines.push('  <div align="center">');
+        secLines.push(`    <img src="https://readme-typing-svg.demolab.com?font=${encodeURIComponent(tc.typingSvgFont)}&weight=900&size=25&duration=3000&pause=1000&color=${tc.typingSvgColor}&center=true&vCenter=true&multiline=true&width=800&height=100&lines=${typingParam}" alt="Typing SVG" />`);
+        secLines.push('  </div>');
+        secLines.push('');
       }
-      if (modules.githubAnalytics.showMostCommitLanguage) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${user}&theme=dark" width="32%" alt="Most Commit Language" />`);
+
+      return secLines;
+    },
+
+    // ── 2. Beast Mode Multi-Column Stats Dashboard ──
+    beastMode: () => {
+      if (!modules.beastModeDashboard.enabled) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- BEAST MODE STATS DASHBOARD: Live Multi-Column Matrix -->');
+      secLines.push('  <div align="center">');
+      secLines.push(`    <h2 align="center" style="font-family: '${tc.capsule.font}', sans-serif; color: #${tc.statsOverrides.titleColor}; margin: 20px 0;">`);
+      secLines.push('      📊 Live Performance Dashboard');
+      secLines.push('    </h2>');
+      secLines.push('    <table style="width: 100%; border-collapse: collapse; margin: 20px 0">');
+      secLines.push('      <tr>');
+
+      if (modules.beastModeDashboard.showProfileViews) {
+        secLines.push(`        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #${tc.statsOverrides.titleColor}, #${tc.statsOverrides.iconColor}); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #${tc.statsOverrides.titleColor};">`);
+        secLines.push(`          <img src="https://komarev.com/ghpvc/?username=${user}&color=${tc.statsOverrides.titleColor}&style=flat-square&label=Profile%20Views" alt="Profile Views" />`);
+        secLines.push(`          <br /><strong style="color: #${tc.statsOverrides.textColor}; font-family: '${tc.capsule.font}'">🚀 Live Counter</strong>`);
+        secLines.push('        </td>');
       }
-      if (modules.githubAnalytics.showStatsCard) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=${user}&theme=dark" width="32%" alt="Overall Stats" />`);
+
+      if (modules.beastModeDashboard.showGrowthMetrics) {
+        secLines.push(`        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #${tc.statsOverrides.iconColor}, #${tc.statsOverrides.titleColor}); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #${tc.statsOverrides.iconColor};">`);
+        secLines.push(`          <img src="https://img.shields.io/github/followers/${user}?style=flat-square&color=${tc.statsOverrides.iconColor}&label=Followers&logo=person-add" alt="Followers" />`);
+        secLines.push(`          <img src="https://img.shields.io/github/stars/${user}?style=flat-square&color=${tc.statsOverrides.titleColor}&label=Stars&logo=star" alt="Stars" />`);
+        secLines.push(`          <br /><strong style="color: #${tc.statsOverrides.textColor}; font-family: '${tc.capsule.font}'">📈 Growth Metrics</strong>`);
+        secLines.push('        </td>');
       }
-      lines.push('  </div>');
-      lines.push('');
-    }
 
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
-
-  // ── 4. Education & Skill Proficiency Journey ──
-  if (modules.educationAndSkills.enabled) {
-    const edu = modules.educationAndSkills;
-    lines.push('  <!-- Education & Skills Journey -->');
-    lines.push('  <h2 align="center">🎓 Education & Skills Journey</h2>');
-    lines.push('');
-    lines.push('  <div align="center">');
-    lines.push('  <table width="100%">');
-    lines.push('    <tr>');
-    lines.push('      <td width="50%" valign="top">');
-    lines.push('        <h3 align="center">📚 Academic Path</h3>');
-    lines.push('        <div align="center">');
-    lines.push(`          <img src="https://img.shields.io/badge/${edu.institutionName}-${edu.institutionColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
-    lines.push('          <br /><br />');
-
-    // SkillIcons Dev Grid
-    if (edu.skillIcons.length > 0) {
-      const chunk1 = edu.skillIcons.slice(0, 30).join(',');
-      const chunk2 = edu.skillIcons.slice(30).join(',');
-      lines.push('          <div style="margin: 20px 0; font-size: 1.1em;">');
-      lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk1}" style="height: 54px; margin: 4px;" alt="Skill Icons" />`);
-      if (chunk2) {
-        lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk2}" style="height: 54px; margin: 4px;" alt="Additional Skill Icons" />`);
+      if (modules.beastModeDashboard.showOpenToWork) {
+        secLines.push('        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #00ff7f, #32cd32); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #00ff7f;">');
+        secLines.push('          <img src="https://img.shields.io/badge/Open%20to%20Work-✅%20YES-00FF7F?style=flat-square&logo=briefcase" alt="Open to Work" />');
+        if (modules.beastModeDashboard.email) {
+          secLines.push(`          <br /><a href="mailto:${modules.beastModeDashboard.email}"><img src="https://img.shields.io/badge/Hire%20Me-🚀%20Click%20Here-FF4500?style=flat-square&logo=rocket&logoColor=white" alt="Hire Me" /></a>`);
+        }
+        secLines.push('          <br /><strong style="color: #000; font-family: \'Fira Code\'">💼 Professional Status</strong>');
+        secLines.push('        </td>');
       }
-      lines.push('          </div>');
-    }
 
-    // Additional Custom Badges
-    if (edu.additionalBadges.length > 0) {
-      lines.push('          <h3 align="center">Additional Skills</h3>');
-      lines.push('          <div style="margin: 15px 0;">');
-      for (const badge of edu.additionalBadges) {
-        lines.push(`            <img src="https://img.shields.io/badge/${badge.name}-${badge.color}?style=for-the-badge&logo=${badge.logo}&logoColor=white" style="height: 30px; margin: 3px;" />`);
+      if (modules.beastModeDashboard.showStreakCard) {
+        const s = tc.streak;
+        secLines.push(`        <td align="center" style="padding: 10px; background: linear-gradient(45deg, #${tc.statsOverrides.titleColor}, #${tc.statsOverrides.borderColor}); border-radius: 15px; margin: 5px; box-shadow: 0 0 10px #${tc.statsOverrides.titleColor};">`);
+        secLines.push(`          <img src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=${tc.statsTheme}&hide_border=true&stroke=${s.stroke}&background=${s.background}&ring=${s.ring}&fire=${s.fire}&currStreakLabel=${s.currStreakLabel}&sideLabels=${s.sideLabels}&dates=${s.dates}" alt="Streak Stats" />`);
+        secLines.push(`          <br /><strong style="color: #${tc.statsOverrides.textColor}; font-family: '${tc.capsule.font}'">🔥 Contribution Streak</strong>`);
+        secLines.push('        </td>');
       }
-      lines.push('          </div>');
-    }
 
-    // WakaTime collapsible progress
-    if (edu.showWakaTimeDropdown && edu.wakaTimeShareSvgUrl) {
-      lines.push('          <br />');
-      lines.push('          <details open>');
-      lines.push('            <summary><b>🔍 View Detailed Coding Activity</b></summary>');
-      lines.push('            <br />');
-      lines.push(`            <img src="${edu.wakaTimeShareSvgUrl}" alt="WakaTime Stats" style="border-radius: 12px; box-shadow: 0 0 15px #8a2be2;" />`);
-      lines.push('            <br /><strong style="color: #8a2be2; font-size: 16px; font-family: \'Fira Code\';">⏱️ Coding Activity - Auto-Updates Weekly</strong>');
-      lines.push('          </details>');
-    }
+      secLines.push('      </tr>');
 
-    lines.push('        </div>');
-    lines.push('      </td>');
-
-    // Right Column: Proficiency Charts & LeetCode
-    lines.push('      <td width="50%" valign="top">');
-    lines.push('        <h3 align="center">🚀 Skill Proficiency & Coding</h3>');
-    lines.push('        <div align="center">');
-    if (edu.showTopLangsPie) {
-      lines.push(`          <img width="400" height="300" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${user}&layout=pie&theme=dark&hide_border=true" alt="Top Languages Pie" />`);
-      lines.push('          <br />');
-    }
-    if (edu.showLeetCodeCard && edu.leetCodeUsername) {
-      lines.push(`          <img src="https://leetcard.jacoblin.cool/${edu.leetCodeUsername}?theme=dark&font=Karma&ext=heatmap" width="400" alt="LeetCode Stats" />`);
-    }
-    lines.push('        </div>');
-    lines.push('      </td>');
-    lines.push('    </tr>');
-    lines.push('  </table>');
-    lines.push('  </div>');
-    lines.push('');
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
-
-  // ── 5. Technology Arsenal Matrix (80x80 Grid Table) ──
-  if (modules.techArsenal.enabled && modules.techArsenal.items.length > 0) {
-    lines.push('  <!-- Technology Arsenal -->');
-    lines.push('  <h2 align="center">🛠️ Technology Arsenal</h2>');
-    lines.push('');
-    lines.push('  <div align="center">');
-    lines.push('    <table>');
-
-    const items = modules.techArsenal.items;
-    const rows: typeof items[] = [];
-    for (let i = 0; i < items.length; i += 5) {
-      rows.push(items.slice(i, i + 5));
-    }
-
-    for (const row of rows) {
-      lines.push('      <tr>');
-      for (const item of row) {
-        lines.push('        <td align="center" width="110">');
-        lines.push(`          <img src="${item.iconUrl}" alt="${item.name}" width="70" height="70" />`);
-        lines.push(`          <br /><b>${item.name}</b>`);
-        lines.push(`          <br /><img src="https://img.shields.io/badge/${encodeURIComponent(item.levelBadge)}-${item.levelColor}?style=flat-square" />`);
-        lines.push('        </td>');
+      if (modules.beastModeDashboard.showWakaTime) {
+        secLines.push('      <tr>');
+        secLines.push('        <td align="center" colspan="4" style="padding: 10px">');
+        secLines.push(`          <img src="https://github-readme-stats.vercel.app/api/wakatime?username=${user}&theme=${tc.statsTheme}&hide_border=true" alt="Practice Time" />`);
+        secLines.push('        </td>');
+        secLines.push('      </tr>');
       }
-      lines.push('      </tr>');
-    }
 
-    lines.push('    </table>');
-    lines.push('  </div>');
-    lines.push('');
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
+      secLines.push('    </table>');
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
 
-  // ── 6. Advanced GitHub Analytics & Activity Graph ──
-  if (modules.githubAnalytics.enabled && modules.githubAnalytics.showActivityWave) {
-    lines.push('  <!-- Enhanced GitHub Analytics & Activity -->');
-    lines.push('  <h2 align="center">📊 Advanced GitHub Analytics</h2>');
-    lines.push('');
-    lines.push('  <div align="center">');
-    lines.push(`    <img width="49%" src="https://github-readme-stats-sigma-five.vercel.app/api?username=${user}&show_icons=true&hide_border=true&title_color=7c217a&icon_color=7c217a&bg_color=0d1117&text_color=ffffff&hide_rank=false&show=reviews,prs_merged,prs_merged_percentage" alt="Stats" />`);
-    lines.push(`    <img width="49%" src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=dark&hide_border=true&stroke=0000&background=0d1117&ring=8A2387&fire=8A2387&currStreakLabel=8A2387" alt="Streaks" />`);
-    lines.push('  </div>');
-    lines.push('');
-    lines.push('  <details open>');
-    lines.push('    <summary><b>📈 Contribution Metrics & Intensity</b></summary>');
-    lines.push('    <br />');
-    lines.push('    <div align="center">');
-    lines.push(`      <img src="https://github-readme-activity-graph.vercel.app/graph?username=${user}&bg_color=0d1117&color=8A2387&line=2575fc&point=8A2387&area=true&hide_border=true&custom_title=Weekly+Code+Intensity&theme=dark&border_radius=20&line_width=3&area_color=2575fc" alt="Activity Graph" />`);
-    lines.push('    </div>');
-    lines.push('  </details>');
-    lines.push('');
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
+    // ── 3. GitHub Summary & Multi-Card Analytics ──
+    analytics: () => {
+      if (!modules.githubAnalytics.enabled) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- GitHub Account Performance Dashboard -->');
+      secLines.push('  <h2 align="center">⚡ GitHub Performance Dashboard</h2>');
+      secLines.push('');
 
-  // ── 7. GitHub Achievement Showcase & Trophies ──
-  if (modules.githubAnalytics.enabled && modules.githubAnalytics.showTrophies) {
-    lines.push('  <!-- GitHub Achievement Showcase -->');
-    lines.push('  <h2 align="center">🏆 GitHub Achievement Showcase</h2>');
-    lines.push('');
-    lines.push('  <div align="center">');
-    lines.push(`    <img src="https://github-profile-trophy.vercel.app/?username=${user}" alt="GitHub Trophies" />`);
-    lines.push('  </div>');
-    lines.push('');
-
-    if (modules.githubAnalytics.showNextAchievements) {
-      lines.push('  <div align="center">');
-      lines.push('    <h3>🎯 Next Achievements to Unlock</h3>');
-      lines.push('    <img src="https://img.shields.io/badge/Arctic_Code_Vault_Contributor-2026-6a11cb?style=for-the-badge&logo=github" />');
-      lines.push('    <img src="https://img.shields.io/badge/300_Days_Streak-In_Progress-2575fc?style=for-the-badge&logo=github" />');
-      lines.push('    <img src="https://img.shields.io/badge/Pull_Shark-Coming_Soon-8A2387?style=for-the-badge&logo=github" />');
-      lines.push('  </div>');
-      lines.push('');
-    }
-
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
-
-  // ── 8. Breakout / Snake Game Suite ──
-  if (modules.gameSuite.enabled) {
-    lines.push('  <!-- 🎮 Interactive Arcade & Contribution Snake -->');
-    lines.push('  <h2 align="center">🎮 GitHub Contribution Snake Game</h2>');
-    lines.push('');
-    lines.push('  <div align="center" style="background: linear-gradient(135deg, #161b22, #0d1117); padding: 20px; border-radius: 16px; margin: 20px 0; border: 1px solid #30363d;">');
-    lines.push('    <picture>');
-    lines.push(`      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake-dark.svg" />`);
-    lines.push(`      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
-    lines.push(`      <img alt="GitHub Contribution Snake" src="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
-    lines.push('    </picture>');
-    lines.push('    <br />');
-    lines.push(`    <em>${modules.gameSuite.motto || 'Code. Commit. Conquer.'}</em>`);
-    lines.push('  </div>');
-    lines.push('');
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
-
-  // ── 9. Connect & Social Links ──
-  if (modules.socialLinks.enabled) {
-    const s = modules.socialLinks;
-    lines.push('  <!-- Connect & Collaborate -->');
-    lines.push('  <h2 align="center">🤝 Let\'s Connect & Collaborate</h2>');
-    lines.push('');
-    lines.push('  <div align="center">');
-
-    if (s.github) lines.push(`    <a href="https://github.com/${s.github}"><img src="https://img.shields.io/badge/GitHub-6a11cb?style=for-the-badge&logo=github&logoColor=white" /></a>`);
-    if (s.linkedin) lines.push(`    <a href="https://www.linkedin.com/in/${s.linkedin}"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>`);
-    if (s.email) lines.push(`    <a href="mailto:${s.email}"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>`);
-    if (s.behance) lines.push(`    <a href="https://www.behance.net/${s.behance}"><img src="https://img.shields.io/badge/Behance-1769FF?style=for-the-badge&logo=behance&logoColor=white" /></a>`);
-    if (s.instagram) lines.push(`    <a href="https://www.instagram.com/${s.instagram}"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>`);
-
-    lines.push('  </div>');
-    lines.push('');
-
-    if (s.scheduleMeetingUrl || s.responseTime) {
-      lines.push('  <div align="center">');
-      if (s.scheduleMeetingUrl) {
-        lines.push(`    <a href="${s.scheduleMeetingUrl}"><img src="https://img.shields.io/badge/Schedule_a_Meeting-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white" /></a>`);
+      if (modules.githubAnalytics.showProfileDetailsCard) {
+        secLines.push('  <div align="center">');
+        secLines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${user}&theme=${tc.summaryTheme}" alt="Profile Details" />`);
+        secLines.push('  </div>');
+        secLines.push('');
       }
-      if (s.responseTime) {
-        lines.push(`    <br /><img src="https://img.shields.io/badge/Response_Time-${encodeURIComponent(s.responseTime)}-brightgreen?style=flat-square" />`);
+
+      if (modules.githubAnalytics.showReposPerLanguage || modules.githubAnalytics.showMostCommitLanguage || modules.githubAnalytics.showStatsCard) {
+        secLines.push('  <div align="center">');
+        if (modules.githubAnalytics.showReposPerLanguage) {
+          secLines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${user}&theme=${tc.summaryTheme}" width="32%" alt="Repos per Language" />`);
+        }
+        if (modules.githubAnalytics.showMostCommitLanguage) {
+          secLines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${user}&theme=${tc.summaryTheme}" width="32%" alt="Most Commit Language" />`);
+        }
+        if (modules.githubAnalytics.showStatsCard) {
+          secLines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=${user}&theme=${tc.summaryTheme}" width="32%" alt="Overall Stats" />`);
+        }
+        secLines.push('  </div>');
+        secLines.push('');
       }
-      lines.push('  </div>');
-      lines.push('');
-    }
-    lines.push(`  ${divider}`);
-    lines.push('');
-  }
 
-  // ── 10. Interactive Widgets (Daily Dev Quote, Spotify, Coding Challenge, Visitor Map, Mantras) ──
-  if (modules.interactiveWidgets.enabled) {
-    if (modules.interactiveWidgets.showSpotify) {
-      lines.push('  <!-- 🎵 Spotify Live Music Player -->');
-      lines.push('  <h2 align="center">🎵 Currently Vibing To</h2>');
-      lines.push('  <div align="center">');
-      lines.push('    <img src="https://synthetixgit.vercel.app/api/svg/spotify?track=Deep%20Focus%20%26%20Lofi%20Coding&artist=SynthetixGit%20Vibes" width="450" alt="Spotify Player" />');
-      lines.push('  </div>');
-      lines.push('');
-      lines.push(`  ${divider}`);
-      lines.push('');
-    }
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
 
-    if (modules.interactiveWidgets.showDailyDevQuote) {
-      lines.push('  <!-- Daily Dev Quote -->');
-      lines.push('  <h2>💬 Daily Dev Quote</h2>');
-      lines.push('');
-      lines.push('  <div align="center">');
-      lines.push('    <img src="https://github-readme-quotes-bay.vercel.app/quote?theme=dark&animation=grow_out_in&layout=default&font=Fira%20Code&bgColor=#00FFFF&textColor=7B2FF7&authorColor=8B5CF6&borderColor=6a11cb" alt="Dev Quote" />');
-      lines.push('  </div>');
-      lines.push('');
-      lines.push(`  ${divider}`);
-      lines.push('');
-    }
+    // ── 4. Education & Skill Proficiency Journey ──
+    education: () => {
+      if (!modules.educationAndSkills.enabled) return [];
+      const secLines: string[] = [];
+      const edu = modules.educationAndSkills;
+      secLines.push('  <!-- Education & Skills Journey -->');
+      secLines.push('  <h2 align="center">🎓 Education & Skills Journey</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+      secLines.push('  <table width="100%">');
+      secLines.push('    <tr>');
+      secLines.push('      <td width="50%" valign="top">');
+      secLines.push('        <h3 align="center">📚 Academic Path</h3>');
+      secLines.push('        <div align="center">');
+      secLines.push(`          <img src="https://img.shields.io/badge/${edu.institutionName || 'University'}-${edu.institutionColor || tc.statsOverrides.titleColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
+      secLines.push('          <br /><br />');
 
-    if (modules.interactiveWidgets.showCodingChallenge) {
-      lines.push('  <!-- Dynamic Coding Challenge -->');
-      lines.push('  <h2 align="center">🧠 Daily Coding Challenge</h2>');
-      lines.push('  <div align="center">');
-      lines.push('    <details>');
-      lines.push('      <summary><b>🎯 Click to reveal today\'s challenge!</b></summary>');
-      lines.push('      <br />');
-      lines.push('      <div id="daily-challenge">');
-      lines.push('        **Challenge: Two Sum Problem**<br />');
-      lines.push('        **Difficulty:** 🟡 Medium<br />');
-      lines.push('        > Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to target.<br />');
-      lines.push('      </div>');
-      lines.push('    </details>');
-      lines.push('  </div>');
-      lines.push('');
-      lines.push(`  ${divider}`);
-      lines.push('');
-    }
-
-    if (modules.interactiveWidgets.showPersonalPhilosophy && modules.interactiveWidgets.mantras.length > 0) {
-      lines.push('  <!-- Dynamic Personal Philosophy -->');
-      lines.push('  <h2 align="center">🌟 Personal Philosophy</h2>');
-      lines.push('');
-      lines.push('  <div align="center">');
-      lines.push('    <blockquote>');
-      lines.push('      <h3>🚀 My Developer Mantras</h3>');
-      lines.push('      <table>');
-      for (const mantra of modules.interactiveWidgets.mantras) {
-        lines.push(`        <tr><td>${mantra}</td></tr>`);
+      // SkillIcons Dev Grid
+      if (edu.skillIcons.length > 0) {
+        const chunk1 = edu.skillIcons.slice(0, 30).join(',');
+        const chunk2 = edu.skillIcons.slice(30).join(',');
+        const iconTheme = tc.statsTheme === 'nord' || tc.statsTheme === 'default' ? 'light' : 'dark';
+        secLines.push('          <div style="margin: 20px 0; font-size: 1.1em;">');
+        secLines.push(`            <img src="https://skillicons.dev/icons?i=${chunk1}&theme=${iconTheme}" style="height: 54px; margin: 4px;" alt="Skill Icons" />`);
+        if (chunk2) {
+          secLines.push(`            <img src="https://skillicons.dev/icons?i=${chunk2}&theme=${iconTheme}" style="height: 54px; margin: 4px;" alt="Additional Skill Icons" />`);
+        }
+        secLines.push('          </div>');
       }
-      lines.push('      </table>');
-      lines.push('    </blockquote>');
-      lines.push('  </div>');
-      lines.push('');
-      lines.push('---');
-      lines.push('');
-    }
-  }
 
-  // ── 11. Footer Capsule ──
-  if (modules.footer.enabled) {
-    const closeEnc = encodeURIComponent(modules.footer.closingText || 'Thanks for visiting!');
-    lines.push(`  <div align="center">`);
-    lines.push(`    <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=150&section=footer&text=${closeEnc}&fontSize=40&fontAlignY=65&animation=twinkling&fontColor=fff" width="100%" alt="Footer Banner" />`);
-    lines.push('  </div>');
-    lines.push('');
-    lines.push('  <div align="center">');
-    lines.push('    <img src="https://img.shields.io/badge/Made%20with-❤️-6a11cb?style=for-the-badge" />');
-    lines.push(`    <img src="https://img.shields.io/badge/By-${encodeURIComponent(modules.footer.authorName || user)}-2575fc?style=for-the-badge" />`);
-    lines.push(`    <img src="https://img.shields.io/badge/${encodeURIComponent(modules.footer.statusBadgeText || 'Status-Beast Mode ON')}-8A2387?style=for-the-badge" />`);
-    lines.push('  </div>');
+      // Additional Custom Badges
+      if (edu.additionalBadges.length > 0) {
+        secLines.push('          <h3 align="center">Additional Skills</h3>');
+        secLines.push('          <div style="margin: 15px 0;">');
+        for (const badge of edu.additionalBadges) {
+          secLines.push(`            <img src="https://img.shields.io/badge/${badge.name}-${badge.color}?style=for-the-badge&logo=${badge.logo}&logoColor=white" style="height: 30px; margin: 3px;" />`);
+        }
+        secLines.push('          </div>');
+      }
+
+      // WakaTime collapsible progress
+      if (edu.showWakaTimeDropdown && edu.wakaTimeShareSvgUrl) {
+        secLines.push('          <br />');
+        secLines.push('          <details open>');
+        secLines.push('            <summary><b>🔍 View Detailed Coding Activity</b></summary>');
+        secLines.push('            <br />');
+        secLines.push(`            <img src="${edu.wakaTimeShareSvgUrl}" alt="WakaTime Stats" style="border-radius: 12px; box-shadow: 0 0 15px #${tc.statsOverrides.titleColor};" />`);
+        secLines.push(`            <br /><strong style="color: #${tc.statsOverrides.titleColor}; font-size: 16px; font-family: 'Fira Code';">⏱️ Coding Activity - Auto-Updates Weekly</strong>`);
+        secLines.push('          </details>');
+      }
+
+      secLines.push('        </div>');
+      secLines.push('      </td>');
+
+      // Right Column: Proficiency Charts & LeetCode
+      secLines.push('      <td width="50%" valign="top">');
+      secLines.push('        <h3 align="center">🚀 Skill Proficiency & Coding</h3>');
+      secLines.push('        <div align="center">');
+      if (edu.showTopLangsPie) {
+        secLines.push(`          <img width="400" height="300" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${user}&layout=pie&theme=${tc.statsTheme}&hide_border=true" alt="Top Languages Pie" />`);
+        secLines.push('          <br />');
+      }
+      if (edu.showLeetCodeCard && edu.leetCodeUsername) {
+        const leetTheme = tc.statsTheme === 'dracula' ? 'dracula' : tc.statsTheme === 'nord' ? 'nord' : 'dark';
+        secLines.push(`          <img src="https://leetcard.jacoblin.cool/${edu.leetCodeUsername}?theme=${leetTheme}&font=Karma&ext=heatmap" width="400" alt="LeetCode Stats" />`);
+      }
+      secLines.push('        </div>');
+      secLines.push('      </td>');
+      secLines.push('    </tr>');
+      secLines.push('  </table>');
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 5. Technology Arsenal Matrix (80x80 Grid Table) ──
+    arsenal: () => {
+      if (!modules.techArsenal.enabled || modules.techArsenal.items.length === 0) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- Technology Arsenal -->');
+      secLines.push('  <h2 align="center">🛠️ Technology Arsenal</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+      secLines.push('    <table>');
+
+      const items = modules.techArsenal.items;
+      const rows: typeof items[] = [];
+      for (let i = 0; i < items.length; i += 5) {
+        rows.push(items.slice(i, i + 5));
+      }
+
+      for (const row of rows) {
+        secLines.push('      <tr>');
+        for (const item of row) {
+          secLines.push('        <td align="center" width="110">');
+          secLines.push(`          <img src="${item.iconUrl}" alt="${item.name}" width="70" height="70" />`);
+          secLines.push(`          <br /><b>${item.name}</b>`);
+          secLines.push(`          <br /><img src="https://img.shields.io/badge/${encodeURIComponent(item.levelBadge)}-${item.levelColor || tc.statsOverrides.titleColor}?style=flat-square" />`);
+          secLines.push('        </td>');
+        }
+        secLines.push('      </tr>');
+      }
+
+      secLines.push('    </table>');
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 6. Advanced GitHub Analytics & Activity Graph ──
+    activity: () => {
+      if (!modules.githubAnalytics.enabled || !modules.githubAnalytics.showActivityWave) return [];
+      const secLines: string[] = [];
+      const act = tc.activityGraph;
+      const str = tc.streak;
+      secLines.push('  <!-- Enhanced GitHub Analytics & Activity -->');
+      secLines.push('  <h2 align="center">📊 Advanced GitHub Analytics</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+      secLines.push(`    <img width="49%" src="https://github-readme-stats.vercel.app/api?username=${user}&show_icons=true&hide_border=true&theme=${tc.statsTheme}" alt="Stats" />`);
+      secLines.push(`    <img width="49%" src="https://github-readme-streak-stats.herokuapp.com/?user=${user}&theme=${tc.statsTheme}&hide_border=true&stroke=${str.stroke}&background=${str.background}&ring=${str.ring}&fire=${str.fire}&currStreakLabel=${str.currStreakLabel}" alt="Streaks" />`);
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push('  <details open>');
+      secLines.push('    <summary><b>📈 Contribution Metrics & Intensity</b></summary>');
+      secLines.push('    <br />');
+      secLines.push('    <div align="center">');
+      secLines.push(`      <img src="https://github-readme-activity-graph.vercel.app/graph?username=${user}&bg_color=${act.bgColor}&color=${act.color}&line=${act.line}&point=${act.point}&area=true&hide_border=true&custom_title=Weekly+Code+Intensity&theme=${tc.statsTheme}&border_radius=20&line_width=3&area_color=${act.areaColor}" alt="Activity Graph" />`);
+      secLines.push('    </div>');
+      secLines.push('  </details>');
+      secLines.push('');
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 7. GitHub Achievement Showcase & Trophies ──
+    trophies: () => {
+      if (!modules.githubAnalytics.enabled || !modules.githubAnalytics.showTrophies) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- GitHub Achievement Showcase -->');
+      secLines.push('  <h2 align="center">🏆 GitHub Achievement Showcase</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+      secLines.push(`    <img src="https://github-profile-trophy.vercel.app/?username=${user}&theme=${tc.trophyTheme}" alt="GitHub Trophies" />`);
+      secLines.push('  </div>');
+      secLines.push('');
+
+      if (modules.githubAnalytics.showNextAchievements) {
+        secLines.push('  <div align="center">');
+        secLines.push('    <h3>🎯 Next Achievements to Unlock</h3>');
+        secLines.push(`    <img src="https://img.shields.io/badge/Arctic_Code_Vault_Contributor-2026-${tc.statsOverrides.titleColor}?style=for-the-badge&logo=github" />`);
+        secLines.push(`    <img src="https://img.shields.io/badge/300_Days_Streak-In_Progress-${tc.statsOverrides.iconColor}?style=for-the-badge&logo=github" />`);
+        secLines.push(`    <img src="https://img.shields.io/badge/Pull_Shark-Coming_Soon-${tc.statsOverrides.borderColor}?style=for-the-badge&logo=github" />`);
+        secLines.push('  </div>');
+        secLines.push('');
+      }
+
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 8. Breakout / Snake Game Suite ──
+    game: () => {
+      if (!modules.gameSuite.enabled) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- 🎮 Interactive Arcade & Contribution Snake -->');
+      secLines.push('  <h2 align="center">🎮 GitHub Contribution Snake Game</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center" style="background: linear-gradient(135deg, #161b22, #0d1117); padding: 20px; border-radius: 16px; margin: 20px 0; border: 1px solid #30363d;">');
+      secLines.push('    <picture>');
+      secLines.push(`      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake-dark.svg" />`);
+      secLines.push(`      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+      secLines.push(`      <img alt="GitHub Contribution Snake" src="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+      secLines.push('    </picture>');
+      secLines.push('    <br />');
+      secLines.push(`    <em>${modules.gameSuite.motto || 'Code. Commit. Conquer.'}</em>`);
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 9. About Me & Facts ──
+    about: () => {
+      if (!modules.aboutMe.enabled) return [];
+      const secLines: string[] = [];
+      secLines.push('  <!-- About Me -->');
+      secLines.push('  <h2 align="center">⚡ About Me</h2>');
+      secLines.push('');
+      if (modules.aboutMe.bioText) {
+        secLines.push(`  <p align="center">${modules.aboutMe.bioText}</p>`);
+        secLines.push('');
+      }
+
+      const qf = modules.aboutMe.quickFacts;
+      if (qf.currentWork || qf.learning || qf.collaborate || qf.askMe || qf.reachMe || qf.funFact) {
+        secLines.push('  <div align="center">');
+        secLines.push('    <table>');
+        if (qf.currentWork) secLines.push(`      <tr><td>🔭 I’m currently working on</td><td><b>${qf.currentWork}</b></td></tr>`);
+        if (qf.learning) secLines.push(`      <tr><td>🌱 I’m currently learning</td><td><b>${qf.learning}</b></td></tr>`);
+        if (qf.collaborate) secLines.push(`      <tr><td>👯 I’m looking to collaborate on</td><td><b>${qf.collaborate}</b></td></tr>`);
+        if (qf.askMe) secLines.push(`      <tr><td>💬 Ask me about</td><td><b>${qf.askMe}</b></td></tr>`);
+        if (qf.reachMe) secLines.push(`      <tr><td>📫 How to reach me</td><td><b>${qf.reachMe}</b></td></tr>`);
+        if (qf.funFact) secLines.push(`      <tr><td>⚡ Fun fact</td><td><b>${qf.funFact}</b></td></tr>`);
+        secLines.push('    </table>');
+        secLines.push('  </div>');
+        secLines.push('');
+      }
+
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 10. Connect & Social Links ──
+    social: () => {
+      if (!modules.socialLinks.enabled) return [];
+      const secLines: string[] = [];
+      const s = modules.socialLinks;
+      secLines.push('  <!-- Connect & Collaborate -->');
+      secLines.push('  <h2 align="center">🤝 Let\'s Connect & Collaborate</h2>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+
+      const bStyle = tc.badgeStyle || 'for-the-badge';
+      if (s.github) secLines.push(`    <a href="https://github.com/${s.github}"><img src="https://img.shields.io/badge/GitHub-181717?style=${bStyle}&logo=github&logoColor=white" /></a>`);
+      if (s.linkedin) {
+        const link = s.linkedin.startsWith('http') ? s.linkedin : `https://www.linkedin.com/in/${s.linkedin}`;
+        secLines.push(`    <a href="${link}"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=${bStyle}&logo=linkedin&logoColor=white" /></a>`);
+      }
+      if (s.email) secLines.push(`    <a href="mailto:${s.email}"><img src="https://img.shields.io/badge/Email-EA4335?style=${bStyle}&logo=gmail&logoColor=white" /></a>`);
+      if (s.twitter) {
+        const tw = s.twitter.startsWith('http') ? s.twitter : `https://x.com/${s.twitter.replace('@', '')}`;
+        secLines.push(`    <a href="${tw}"><img src="https://img.shields.io/badge/Twitter%20%2F%20X-000000?style=${bStyle}&logo=x&logoColor=white" /></a>`);
+      }
+      if (s.behance) secLines.push(`    <a href="https://www.behance.net/${s.behance}"><img src="https://img.shields.io/badge/Behance-1769FF?style=${bStyle}&logo=behance&logoColor=white" /></a>`);
+      if (s.instagram) secLines.push(`    <a href="https://www.instagram.com/${s.instagram.replace('@', '')}"><img src="https://img.shields.io/badge/Instagram-E4405F?style=${bStyle}&logo=instagram&logoColor=white" /></a>`);
+      if (s.portfolio) secLines.push(`    <a href="${s.portfolio}"><img src="https://img.shields.io/badge/Portfolio-6a11cb?style=${bStyle}&logo=googlechrome&logoColor=white" /></a>`);
+      if (s.discord) secLines.push(`    <a href="${s.discord}"><img src="https://img.shields.io/badge/Discord-5865F2?style=${bStyle}&logo=discord&logoColor=white" /></a>`);
+      if (s.youtube) secLines.push(`    <a href="${s.youtube}"><img src="https://img.shields.io/badge/YouTube-FF0000?style=${bStyle}&logo=youtube&logoColor=white" /></a>`);
+
+      secLines.push('  </div>');
+      secLines.push('');
+
+      if (s.scheduleMeetingUrl || s.responseTime) {
+        secLines.push('  <div align="center">');
+        if (s.scheduleMeetingUrl) {
+          secLines.push(`    <a href="${s.scheduleMeetingUrl}"><img src="https://img.shields.io/badge/Schedule_a_Meeting-4285F4?style=${bStyle}&logo=google-calendar&logoColor=white" /></a>`);
+        }
+        if (s.responseTime) {
+          secLines.push(`    <br /><img src="https://img.shields.io/badge/Response_Time-${encodeURIComponent(s.responseTime)}-brightgreen?style=flat-square" />`);
+        }
+        secLines.push('  </div>');
+        secLines.push('');
+      }
+      secLines.push(`  ${divider}`);
+      secLines.push('');
+      return secLines;
+    },
+
+    // ── 11. Interactive Widgets ──
+    widgets: () => {
+      if (!modules.interactiveWidgets.enabled) return [];
+      const secLines: string[] = [];
+
+      if (modules.interactiveWidgets.showSpotify) {
+        secLines.push('  <!-- 🎵 Spotify Live Music Player -->');
+        secLines.push('  <h2 align="center">🎵 Currently Vibing To</h2>');
+        secLines.push('  <div align="center">');
+        secLines.push('    <img src="https://synthetixgit.vercel.app/api/svg/spotify?track=Deep%20Focus%20%26%20Lofi%20Coding&artist=SynthetixGit%20Vibes" width="450" alt="Spotify Player" />');
+        secLines.push('  </div>');
+        secLines.push('');
+        secLines.push(`  ${divider}`);
+        secLines.push('');
+      }
+
+      if (modules.interactiveWidgets.showDailyDevQuote) {
+        secLines.push('  <!-- Daily Dev Quote -->');
+        secLines.push('  <h2>💬 Daily Dev Quote</h2>');
+        secLines.push('');
+        secLines.push('  <div align="center">');
+        secLines.push(`    <img src="https://github-readme-quotes-bay.vercel.app/quote?theme=${tc.statsTheme}&animation=grow_out_in&layout=default&font=Fira%20Code" alt="Dev Quote" />`);
+        secLines.push('  </div>');
+        secLines.push('');
+        secLines.push(`  ${divider}`);
+        secLines.push('');
+      }
+
+      if (modules.interactiveWidgets.showCodingChallenge) {
+        secLines.push('  <!-- Dynamic Coding Challenge -->');
+        secLines.push('  <h2 align="center">🧠 Daily Coding Challenge</h2>');
+        secLines.push('  <div align="center">');
+        secLines.push('    <details>');
+        secLines.push('      <summary><b>🎯 Click to reveal today\'s challenge!</b></summary>');
+        secLines.push('      <br />');
+        secLines.push('      <div id="daily-challenge">');
+        secLines.push('        **Challenge: Two Sum Problem**<br />');
+        secLines.push('        **Difficulty:** 🟡 Medium<br />');
+        secLines.push('        > Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to target.<br />');
+        secLines.push('      </div>');
+        secLines.push('    </details>');
+        secLines.push('  </div>');
+        secLines.push('');
+        secLines.push(`  ${divider}`);
+        secLines.push('');
+      }
+
+      if (modules.interactiveWidgets.showPersonalPhilosophy && modules.interactiveWidgets.mantras.length > 0) {
+        secLines.push('  <!-- Dynamic Personal Philosophy -->');
+        secLines.push('  <h2 align="center">🌟 Personal Philosophy</h2>');
+        secLines.push('');
+        secLines.push('  <div align="center">');
+        secLines.push('    <blockquote>');
+        secLines.push('      <h3>🚀 My Developer Mantras</h3>');
+        secLines.push('      <table>');
+        for (const mantra of modules.interactiveWidgets.mantras) {
+          secLines.push(`        <tr><td>${mantra}</td></tr>`);
+        }
+        secLines.push('      </table>');
+        secLines.push('    </blockquote>');
+        secLines.push('  </div>');
+        secLines.push('');
+        secLines.push(`  ${divider}`);
+        secLines.push('');
+      }
+
+      return secLines;
+    },
+
+    // ── 12. Footer Capsule ──
+    footer: () => {
+      if (!modules.footer.enabled) return [];
+      const secLines: string[] = [];
+      const closeEnc = encodeURIComponent(modules.footer.closingText || 'Thanks for visiting!');
+      const fc = tc.footerCapsule;
+      secLines.push('  <div align="center">');
+      secLines.push(`    <img src="https://capsule-render.vercel.app/api?type=${fc.type}&color=${fc.color}&customColorList=${fc.customColorList || '1,2,4,5,40'}&height=150&section=footer&text=${closeEnc}&fontSize=40&fontAlignY=65&animation=twinkling&fontColor=${fc.fontColor}" width="100%" alt="Footer Banner" />`);
+      secLines.push('  </div>');
+      secLines.push('');
+      secLines.push('  <div align="center">');
+      secLines.push(`    <img src="https://img.shields.io/badge/Made%20with-❤️-${tc.statsOverrides.titleColor}?style=for-the-badge" />`);
+      secLines.push(`    <img src="https://img.shields.io/badge/By-${encodeURIComponent(modules.footer.authorName || user)}-${tc.statsOverrides.iconColor}?style=for-the-badge" />`);
+      secLines.push(`    <img src="https://img.shields.io/badge/${encodeURIComponent(modules.footer.statusBadgeText || 'Status-Beast Mode ON')}-${tc.statsOverrides.borderColor}?style=for-the-badge" />`);
+      secLines.push('  </div>');
+      return secLines;
+    },
+  };
+
+  // Run in order
+  for (const secKey of order) {
+    const fn = sectionRenderers[secKey];
+    if (fn) {
+      lines.push(...fn());
+    }
   }
 
   lines.push('</div>');
