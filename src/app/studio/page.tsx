@@ -1,9 +1,35 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+/* eslint-disable @next/next/no-img-element */
+
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useProfileStore } from '@/stores/profile-store';
-import { useEditorStore } from '@/stores/editor-store';
+import type { IconType } from 'react-icons';
+import {
+  FiActivity,
+  FiArrowLeft,
+  FiArrowRight,
+  FiBookOpen,
+  FiBox,
+  FiCheck,
+  FiCode,
+  FiColumns,
+  FiCopy,
+  FiDownload,
+  FiExternalLink,
+  FiEye,
+  FiGithub,
+  FiGrid,
+  FiLayers,
+  FiPlay,
+  FiRefreshCw,
+  FiShield,
+  FiSliders,
+  FiTerminal,
+  FiUploadCloud,
+  FiZap,
+} from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import { ProfileHeader } from '@/components/studio/profile-header';
 import { SidebarControls } from '@/components/studio/sidebar-controls';
 import { MarkdownEditor } from '@/components/studio/markdown-editor';
@@ -14,31 +40,100 @@ import { CanvasPainter } from '@/components/studio/canvas-painter';
 import { ProjectReadmeConfigurator } from '@/components/studio/project-readme-configurator';
 import { defaultProjectConfig } from '@/lib/project-readme-engine';
 import {
-  FiCode,
-  FiEye,
-  FiSliders,
-  FiDownload,
-  FiArrowLeft,
-  FiCopy,
-  FiCheck,
-  FiGithub,
-  FiColumns,
-  FiUploadCloud,
-  FiZap,
-  FiBox,
-  FiPlay,
-  FiExternalLink,
-} from 'react-icons/fi';
-import toast from 'react-hot-toast';
+  ALL_15_TEMPLATES,
+  type TemplateId,
+} from '@/lib/template-engine';
+import {
+  compileBlogSyncWidget,
+  compileLeetCodeWidget,
+  compileSpotifyWidget,
+  compileTypingSvg,
+} from '@/lib/dynamic-widgets-engine';
+import { useEditorStore } from '@/stores/editor-store';
+import { useProfileStore } from '@/stores/profile-store';
 
-type StudioMainMode = 'profile' | 'canvas' | 'repo' | 'arcade';
+type StudioMainMode = 'profile' | 'canvas' | 'repo' | 'arcade' | 'widgets';
 type ViewMode = 'code' | 'preview' | 'split';
 type MobileTab = 'controls' | 'editor' | 'preview';
+
+interface ModeOption {
+  id: StudioMainMode;
+  label: string;
+  title: string;
+  description: string;
+  icon: IconType;
+  accent: string;
+}
+
+interface WidgetCard {
+  title: string;
+  description: string;
+  previewUrl: string;
+  markdown: string;
+  accent: string;
+}
+
+const DEMO_USER = 'Dev-Nurul08';
+const validModes: StudioMainMode[] = ['profile', 'canvas', 'repo', 'arcade', 'widgets'];
+const validTemplateIds = new Set(ALL_15_TEMPLATES.map((template) => template.id));
+
+const modeOptions: ModeOption[] = [
+  {
+    id: 'profile',
+    label: 'Profile',
+    title: 'Profile README Studio',
+    description: 'Presets, modules, badges, trophies, widgets, source markdown, and GitHub-rendered preview.',
+    icon: FiSliders,
+    accent: 'border-cyan-300/40 bg-cyan-300/10 text-cyan-100',
+  },
+  {
+    id: 'canvas',
+    label: 'Art',
+    title: 'Contribution Art Painter',
+    description: 'Draw a 52x7 GitHub calendar and export a reproducible painting script.',
+    icon: FiGrid,
+    accent: 'border-emerald-300/40 bg-emerald-300/10 text-emerald-100',
+  },
+  {
+    id: 'repo',
+    label: 'Repo',
+    title: 'Project README Builder',
+    description: 'Generate project docs with feature lists, architecture, setup, environment, and API tables.',
+    icon: FiBox,
+    accent: 'border-amber-300/40 bg-amber-300/10 text-amber-100',
+  },
+  {
+    id: 'arcade',
+    label: 'Arcade',
+    title: 'GitHub Arcade Launcher',
+    description: 'Open playable canvas games for contribution Snake, Brick Breaker, and Pac-Man style runs.',
+    icon: FiPlay,
+    accent: 'border-rose-300/40 bg-rose-300/10 text-rose-100',
+  },
+  {
+    id: 'widgets',
+    label: 'Widgets',
+    title: 'Dynamic SVG Widgets',
+    description: 'Build embeddable typing, now playing, LeetCode, and blog-sync markdown blocks.',
+    icon: FiActivity,
+    accent: 'border-indigo-300/40 bg-indigo-300/10 text-indigo-100',
+  },
+];
+
+function parseMode(value: string | null): StudioMainMode {
+  return validModes.includes(value as StudioMainMode) ? (value as StudioMainMode) : 'profile';
+}
+
+function getTemplateId(value: string | null): TemplateId | null {
+  return value && validTemplateIds.has(value as TemplateId) ? (value as TemplateId) : null;
+}
 
 function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userParam = searchParams.get('user') || searchParams.get('username') || '';
+  const studioMode = parseMode(searchParams.get('mode'));
+  const templateParam = getTemplateId(searchParams.get('template'));
 
   const { profileData, isLoading, username, fetchProfile } = useProfileStore();
   const {
@@ -58,465 +153,684 @@ function StudioContent() {
     initializeFromProfile,
   } = useEditorStore();
 
-  const [studioMode, setStudioMode] = useState<StudioMainMode>('profile');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [mobileTab, setMobileTab] = useState<MobileTab>('controls');
   const [copied, setCopied] = useState(false);
-  const [scanInput, setScanInput] = useState('');
+  const [scanInput, setScanInput] = useState(userParam || username || DEMO_USER);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
-
   const [projectConfig, setProjectConfig] = useState(defaultProjectConfig);
 
-  // Initial load from URL query
+  const activeUser = profileData?.profile?.username || username || userParam || DEMO_USER;
+  const activeMode = modeOptions.find((mode) => mode.id === studioMode) ?? modeOptions[0];
+  const ActiveModeIcon = activeMode.icon;
+
+  const widgetCards = useMemo<WidgetCard[]>(
+    () => [
+      {
+        title: 'Typing SVG',
+        description: 'Rotating headline lines for profile or project headers.',
+        previewUrl: '/api/svg/typing?lines=Full%20Stack%20Developer;Open%20Source%20Builder;README%20Studio&color=22D3EE&background=0B0F14',
+        markdown: compileTypingSvg(['Full Stack Developer', 'Open Source Builder', 'README Studio'], 'Orbitron', '22D3EE'),
+        accent: 'border-cyan-300/30 bg-cyan-300/10',
+      },
+      {
+        title: 'Now Playing',
+        description: 'Animated equalizer SVG for a Spotify-style README block.',
+        previewUrl: '/api/svg/spotify?track=Deep%20Focus%20Build&artist=SynthetixGit%20Studio',
+        markdown: compileSpotifyWidget('Deep Focus Build', 'SynthetixGit Studio'),
+        accent: 'border-emerald-300/30 bg-emerald-300/10',
+      },
+      {
+        title: 'LeetCode Card',
+        description: 'Embeddable progress card linked to a coding profile.',
+        previewUrl: '/api/svg/header?text=LeetCode%20Progress&subtitle=Daily%20practice&style=minimal&width=600&height=120',
+        markdown: compileLeetCodeWidget('Fr_Nurul', 'dark'),
+        accent: 'border-amber-300/30 bg-amber-300/10',
+      },
+      {
+        title: 'Blog Sync',
+        description: 'Recent article embed block for Dev.to, Medium, or Hashnode style feeds.',
+        previewUrl: '/api/svg/header?text=Latest%20Writing&subtitle=Blog%20feed&style=terminal-prompt&width=600&height=120',
+        markdown: compileBlogSyncWidget('devto', 'developer'),
+        accent: 'border-indigo-300/30 bg-indigo-300/10',
+      },
+    ],
+    []
+  );
+
+  const widgetMarkdown = useMemo(
+    () => widgetCards.map((widget) => widget.markdown).join('\n\n'),
+    [widgetCards]
+  );
+
   useEffect(() => {
-    if (userParam && userParam !== username) {
-      setScanInput(userParam);
-      fetchProfile(userParam).then((data) => {
-        if (data) initializeFromProfile(data);
-      });
-    } else if (username && !profileData && !isLoading) {
-      fetchProfile(username).then((data) => {
-        if (data) initializeFromProfile(data);
-      });
+    const target = userParam.trim();
+    const loadedUser = profileData?.profile.username.toLowerCase();
+
+    if (!target || loadedUser === target.toLowerCase()) {
+      return;
     }
-  }, [userParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeUser = profileData?.profile?.username || username || userParam || 'Dev-Nurul08';
+    void fetchProfile(target).then((data) => {
+      if (data) {
+        initializeFromProfile(data);
+      }
+    });
+  }, [fetchProfile, initializeFromProfile, profileData?.profile.username, userParam]);
 
-  // Auto regenerate markdown
   useEffect(() => {
-    if (activeUser && studioMode === 'profile') {
+    if (!templateParam || templateParam === templateId) {
+      return;
+    }
+
+    applyTemplatePreset(templateParam, activeUser, profileData);
+  }, [activeUser, applyTemplatePreset, profileData, templateId, templateParam]);
+
+  useEffect(() => {
+    if (studioMode === 'profile') {
       regenerateMarkdown(activeUser, profileData);
     }
-  }, [modules, theme, templateId, activeUser, profileData, regenerateMarkdown, studioMode]);
+  }, [activeUser, modules, profileData, regenerateMarkdown, studioMode, templateId, theme]);
 
-  // In-studio scanner
-  const handleInStudioScan = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const replaceStudioUrl = (nextMode: StudioMainMode, nextUser = activeUser) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('mode', nextMode);
+    params.set('user', nextUser);
+    router.replace(`/studio?${params.toString()}`, { scroll: false });
+  };
+
+  const handleInStudioScan = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     const target = scanInput.trim();
-    if (!target) return;
 
-    const toastId = toast.loading(`Scanning @${target}...`);
+    if (!target) {
+      toast.error('Enter a GitHub username.');
+      return;
+    }
+
+    const toastId = toast.loading(`Scanning @${target}`);
     const data = await fetchProfile(target);
+
     if (data) {
       initializeFromProfile(data);
       toast.success(`Loaded @${data.profile.username}`, { id: toastId });
-      router.replace(`/studio?user=${encodeURIComponent(data.profile.username)}`);
-    } else {
-      toast.error(`Could not fetch @${target}`, { id: toastId });
-    }
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setCopied(true);
-      toast.success('README Markdown copied to clipboard!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Failed to copy');
-    }
-  };
-
-  const handleDownloadReadme = () => {
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'README.md';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Downloaded README.md');
-  };
-
-  const handleDownloadSnake = () => {
-    if (!workflowYaml) {
-      toast.error('Enable Contribution Snake first');
+      replaceStudioUrl(studioMode, data.profile.username);
       return;
     }
-    const blob = new Blob([workflowYaml], { type: 'text/yaml' });
+
+    toast.error(`Could not fetch @${target}`, { id: toastId });
+  };
+
+  const handleCopy = async (value = markdown, label = 'README Markdown') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label} copied.`);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error('Copy failed.');
+    }
+  };
+
+  const handleDownload = (value: string, fileName: string, type = 'text/markdown') => {
+    const blob = new Blob([value], { type });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'snake.yml';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
-    toast.success('Downloaded snake.yml');
+    toast.success(`Downloaded ${fileName}.`);
+  };
+
+  const handleDownloadWorkflow = () => {
+    if (!workflowYaml) {
+      toast.error('Enable a game workflow before downloading.');
+      return;
+    }
+
+    handleDownload(workflowYaml, 'snake.yml', 'text/yaml');
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white overflow-hidden">
-      {/* ── Studio Top Header ── */}
-      <header className="h-16 shrink-0 bg-slate-900 border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-4 z-30 shadow-md">
-        {/* Left: Back + Brand + Scanner */}
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer shrink-0"
-            title="Back to Home"
-          >
-            <FiArrowLeft size={16} />
-          </button>
+    <div className="flex min-h-screen flex-col bg-[#0b0f14] text-slate-100 selection:bg-cyan-400 selection:text-slate-950">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f14]/95 backdrop-blur-md">
+        <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+              title="Back home"
+            >
+              <FiArrowLeft size={16} />
+            </button>
 
-          <div className="hidden xl:flex items-center gap-2 shrink-0">
-            <span className="font-extrabold text-sm tracking-tight text-white">
-              Synthetix<span className="text-blue-400">Git</span>
-            </span>
+            <div className="hidden min-w-0 sm:block">
+              <p className="truncate text-sm font-black text-white">SynthetixGit</p>
+              <p className="truncate text-[11px] text-slate-500">{activeMode.title}</p>
+            </div>
           </div>
 
-          {/* Quick Scanner */}
-          <form onSubmit={handleInStudioScan} className="flex items-center gap-2 bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-1.5 focus-within:border-blue-500 transition-all max-w-[200px] sm:max-w-xs">
-            <FiGithub size={14} className="text-slate-400 shrink-0" />
+          <form
+            onSubmit={handleInStudioScan}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-white/10 bg-[#101720] px-2 py-1.5 focus-within:border-cyan-300 sm:max-w-md"
+          >
+            <FiGithub size={14} className="shrink-0 text-slate-500" />
             <input
-              type="text"
               value={scanInput}
-              onChange={(e) => setScanInput(e.target.value)}
-              placeholder={activeUser ? `@${activeUser}` : 'Scan username...'}
-              className="bg-transparent text-xs font-mono text-white placeholder-slate-500 outline-none w-full"
+              onChange={(event) => setScanInput(event.target.value)}
+              placeholder={`@${activeUser}`}
+              className="min-w-0 flex-1 bg-transparent font-mono text-xs text-white outline-none placeholder:text-slate-500"
             />
             <button
               type="submit"
               disabled={isLoading || !scanInput.trim()}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 disabled:opacity-30 cursor-pointer shrink-0"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-cyan-300 text-slate-950 transition-colors hover:bg-cyan-200 disabled:opacity-40"
+              title="Scan profile"
             >
-              {isLoading ? '...' : 'Scan'}
+              {isLoading ? <FiRefreshCw className="animate-spin" size={13} /> : <FiArrowRight size={14} />}
             </button>
           </form>
-        </div>
 
-        {/* Center: Top Studio Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
-          <button
-            type="button"
-            onClick={() => setStudioMode('profile')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              studioMode === 'profile'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <FiZap size={13} className="text-amber-400" />
-            <span className="hidden sm:inline">Profile Studio</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStudioMode('canvas')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              studioMode === 'canvas'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="text-xs">🎨</span>
-            <span className="hidden sm:inline">Contribution Canvas Art</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStudioMode('repo')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              studioMode === 'repo'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <FiBox size={13} className="text-blue-300" />
-            <span className="hidden sm:inline">Repo Mode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStudioMode('arcade')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              studioMode === 'arcade'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <FiPlay size={13} className="text-pink-400" />
-            <span className="hidden sm:inline">Arcade Games</span>
-          </button>
-        </div>
-
-        {/* Right: Export & Copy Actions */}
-        <div className="flex items-center gap-2">
-          {studioMode === 'profile' && (
-            <div className="hidden lg:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 mr-1">
+          <div className="flex shrink-0 items-center gap-2">
+            {workflowYaml && (
               <button
                 type="button"
-                onClick={() => setViewMode('code')}
-                className={`p-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'code' ? 'bg-blue-600 text-white' : 'text-slate-400'
-                }`}
-                title="Raw Code"
+                onClick={handleDownloadWorkflow}
+                className="hidden h-9 items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition-colors hover:bg-white/[0.08] lg:inline-flex"
               >
-                <FiCode size={14} />
+                <FiDownload size={14} />
+                Workflow
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('split')}
-                className={`p-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'split' ? 'bg-blue-600 text-white' : 'text-slate-400'
-                }`}
-                title="Split View"
-              >
-                <FiColumns size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('preview')}
-                className={`p-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'preview' ? 'bg-blue-600 text-white' : 'text-slate-400'
-                }`}
-                title="Live Preview"
-              >
-                <FiEye size={14} />
-              </button>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setIsDeployModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-lg shadow-blue-600/30"
-            title="1-Click Deploy to GitHub Profile"
-          >
-            <FiUploadCloud size={14} />
-            <span className="hidden md:inline">1-Click Deploy</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-md shadow-blue-600/25"
-          >
-            {copied ? <FiCheck size={14} className="text-emerald-300" /> : <FiCopy size={14} />}
-            <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadReadme}
-            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
-            title="Download README.md"
-          >
-            <FiDownload size={14} className="text-blue-400" />
-            <span className="hidden sm:inline">.md</span>
-          </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsDeployModalOpen(true)}
+              className="grid h-9 w-9 place-items-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 transition-colors hover:bg-cyan-300/20 sm:w-auto sm:px-3"
+              title="Deploy to GitHub"
+            >
+              <FiUploadCloud size={15} />
+              <span className="hidden text-xs font-bold sm:ml-2 sm:inline">Deploy</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08] sm:w-auto sm:px-3"
+              title="Copy markdown"
+            >
+              {copied ? <FiCheck size={15} className="text-emerald-200" /> : <FiCopy size={15} />}
+              <span className="hidden text-xs font-bold sm:ml-2 sm:inline">{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDownload(markdown, 'README.md')}
+              className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08]"
+              title="Download README.md"
+            >
+              <FiDownload size={15} />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ── Studio Main Viewport By Mode ── */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 🌟 1. Profile Studio Mode (15 Presets & Split View) */}
-        {studioMode === 'profile' && (
-          <>
-            {/* Left Sidebar (Desktop) */}
-            <aside className="hidden md:flex flex-col w-[380px] lg:w-[420px] shrink-0 bg-slate-900 border-r border-slate-800 overflow-hidden shadow-xl">
-              <div className="p-4 border-b border-slate-800 bg-slate-900/50">
-                {isLoading ? (
-                  <ProfileSkeleton />
-                ) : profileData ? (
-                  <ProfileHeader data={profileData} />
-                ) : (
-                  <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-center space-y-1">
-                    <p className="text-xs font-bold text-white">Loaded Profile: @{activeUser}</p>
-                    <p className="text-[11px] text-slate-400">Customizing Beast Mode and 15 designer presets</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                <SidebarControls
-                  modules={modules}
-                  theme={theme}
-                  templateId={templateId}
-                  onUpdateModule={updateModule}
-                  onThemeChange={setTheme}
-                  onTemplateChange={(t) => applyTemplatePreset(t, activeUser || 'developer', profileData)}
-                  onAddBadge={addBadge}
-                  onRemoveBadge={removeBadge}
-                  onApplyRolePreset={applyRolePreset}
-                  onApplyProjectMarkdown={(md: string) => setMarkdown(md)}
-                />
-              </div>
-            </aside>
-
-            {/* Mobile View Switching */}
-            <div className="md:hidden flex-1 overflow-hidden">
-              {mobileTab === 'controls' && (
-                <div className="h-full flex flex-col bg-slate-900">
-                  <div className="p-4 border-b border-slate-800">
-                    {isLoading ? <ProfileSkeleton /> : profileData ? <ProfileHeader data={profileData} /> : null}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <SidebarControls
-                      modules={modules}
-                      theme={theme}
-                      templateId={templateId}
-                      onUpdateModule={updateModule}
-                      onThemeChange={setTheme}
-                      onTemplateChange={(t) => applyTemplatePreset(t, activeUser || 'developer', profileData)}
-                      onAddBadge={addBadge}
-                      onRemoveBadge={removeBadge}
-                      onApplyRolePreset={applyRolePreset}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {mobileTab === 'editor' && (
-                <div className="h-full overflow-hidden">
-                  <MarkdownEditor markdown={markdown} />
-                </div>
-              )}
-
-              {mobileTab === 'preview' && (
-                <div className="h-full overflow-y-auto">
-                  <MarkdownPreview markdown={markdown} username={activeUser} />
-                </div>
-              )}
+      <div className="flex min-h-[calc(100vh-4rem)] flex-1">
+        <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-[#0f151d] p-3 md:block">
+          <div className="mb-3 rounded-lg border border-white/10 bg-[#0b0f14] p-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+              <FiShield size={14} className="text-emerald-200" />
+              Verified surfaces
             </div>
-
-            {/* Desktop Code / Split / Preview View */}
-            <div className="hidden md:flex flex-1 overflow-hidden bg-slate-950">
-              {(viewMode === 'code' || viewMode === 'split') && (
-                <div className={`h-full overflow-hidden flex flex-col ${viewMode === 'split' ? 'w-1/2 border-r border-slate-800' : 'w-full'}`}>
-                  <MarkdownEditor markdown={markdown} />
-                </div>
-              )}
-
-              {(viewMode === 'preview' || viewMode === 'split') && (
-                <div className={`h-full overflow-hidden flex flex-col ${viewMode === 'split' ? 'w-1/2' : 'w-full'}`}>
-                  <MarkdownPreview markdown={markdown} username={activeUser} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* 🎨 2. Dedicated 52x7 Contribution Canvas Art Studio Mode */}
-        {studioMode === 'canvas' && (
-          <div className="flex-1 overflow-y-auto p-6 max-w-6xl mx-auto w-full space-y-6">
-            <CanvasPainter username={activeUser} />
+            <p className="mt-2 text-[11px] leading-5 text-slate-500">
+              Profile, art, repo docs, arcade, widgets, and deploy are separated for direct testing.
+            </p>
           </div>
-        )}
 
-        {/* 📦 3. Repository Documentation Mode */}
-        {studioMode === 'repo' && (
-          <div className="flex-1 flex overflow-hidden">
-            <aside className="w-[420px] shrink-0 bg-slate-900 border-r border-slate-800 overflow-y-auto p-4">
-              <ProjectReadmeConfigurator
-                config={projectConfig}
-                onChange={setProjectConfig}
-                onApplyMarkdown={(md: string) => setMarkdown(md)}
-              />
-            </aside>
-            <div className="flex-1 flex overflow-hidden">
-              <div className="w-1/2 h-full border-r border-slate-800 overflow-hidden">
-                <MarkdownEditor markdown={markdown} />
+          <nav className="space-y-2">
+            {modeOptions.map((mode) => {
+              const Icon = mode.icon;
+              const selected = mode.id === studioMode;
+
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => replaceStudioUrl(mode.id)}
+                  className={`flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition-colors ${
+                    selected ? mode.accent : 'border-white/10 bg-white/[0.025] text-slate-400 hover:bg-white/[0.055] hover:text-white'
+                  }`}
+                >
+                  <Icon size={17} className="shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-black">{mode.label}</span>
+                    <span className="mt-0.5 block truncate text-[11px] opacity-75">{mode.title}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <main className="min-w-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-5 md:pb-5">
+          <section className="mb-4 rounded-lg border border-white/10 bg-[#101720] p-4">
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-md border ${activeMode.accent}`}>
+                  <ActiveModeIcon size={20} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase text-slate-500">Workspace for @{activeUser}</p>
+                  <h1 className="mt-1 text-2xl font-black text-white">{activeMode.title}</h1>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-400">{activeMode.description}</p>
+                </div>
               </div>
-              <div className="w-1/2 h-full overflow-y-auto">
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-xs font-bold text-emerald-100">
+                  Build ready
+                </span>
+                <span className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-xs font-bold text-cyan-100">
+                  15 presets
+                </span>
+                <span className="rounded-md border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 text-xs font-bold text-amber-100">
+                  Next 16
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {studioMode === 'profile' && (
+            <ProfileWorkspace
+              activeUser={activeUser}
+              copied={copied}
+              isLoading={isLoading}
+              markdown={markdown}
+              mobileTab={mobileTab}
+              modules={modules}
+              profileData={profileData}
+              setMobileTab={setMobileTab}
+              setViewMode={setViewMode}
+              theme={theme}
+              templateId={templateId}
+              viewMode={viewMode}
+              onAddBadge={addBadge}
+              onApplyProjectMarkdown={setMarkdown}
+              onApplyRolePreset={applyRolePreset}
+              onCopy={() => void handleCopy()}
+              onRemoveBadge={removeBadge}
+              onTemplateChange={(nextTemplate) => applyTemplatePreset(nextTemplate, activeUser, profileData)}
+              onThemeChange={setTheme}
+              onUpdateMarkdown={setMarkdown}
+              onUpdateModule={updateModule}
+            />
+          )}
+
+          {studioMode === 'canvas' && (
+            <div className="mx-auto max-w-7xl">
+              <CanvasPainter username={activeUser} />
+            </div>
+          )}
+
+          {studioMode === 'repo' && (
+            <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
+              <aside className="min-w-0 rounded-lg border border-white/10 bg-[#101720] p-3">
+                <ProjectReadmeConfigurator
+                  config={projectConfig}
+                  onChange={setProjectConfig}
+                  onApplyMarkdown={setMarkdown}
+                />
+              </aside>
+              <div className="grid min-h-[620px] overflow-hidden rounded-lg border border-white/10 bg-[#0b0f14] lg:grid-cols-2">
+                <MarkdownEditor markdown={markdown} onChange={setMarkdown} readOnly={false} />
                 <MarkdownPreview markdown={markdown} username={activeUser} />
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 🕹️ 4. Playable Arcade Games Mode */}
-        {studioMode === 'arcade' && (
-          <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center justify-center gap-2">
-                <span>🎮 Interactive HTML5 Arcade Games</span>
-              </h2>
-              <p className="text-sm text-slate-400">
-                Play games in your browser powered directly by your real GitHub commit history!
-              </p>
-            </div>
+          {studioMode === 'arcade' && <ArcadeLauncher username={activeUser} />}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Snake */}
-              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 hover:border-emerald-500 transition-all shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl">
-                  🐍
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Contribution Snake</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Classic retro snake eating your commit green food tiles.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/play/${activeUser}/snake`)}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-emerald-600/25"
-                >
-                  <span>Play Snake</span>
-                  <FiExternalLink size={14} />
-                </button>
-              </div>
-
-              {/* Brick Breaker */}
-              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 hover:border-blue-500 transition-all shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-2xl">
-                  🧱
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Brick Breaker</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Paddle and physics ball bouncing to smash contribution bricks.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/play/${activeUser}/brick-breaker`)}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-blue-600/25"
-                >
-                  <span>Play Brick Breaker</span>
-                  <FiExternalLink size={14} />
-                </button>
-              </div>
-
-              {/* Pac-Man */}
-              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 hover:border-amber-500 transition-all shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">
-                  👾
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Pac-Man Commit Run</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Chomp commit corridor dots while evading bugs.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/play/${activeUser}/pacman`)}
-                  className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-amber-600/25"
-                >
-                  <span>Play Pac-Man</span>
-                  <FiExternalLink size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          {studioMode === 'widgets' && (
+            <WidgetWorkspace
+              widgets={widgetCards}
+              widgetMarkdown={widgetMarkdown}
+              onApply={() => setMarkdown(widgetMarkdown)}
+              onCopy={(value, label) => void handleCopy(value, label)}
+            />
+          )}
+        </main>
       </div>
 
-      {/* Deploy Modal */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/10 bg-[#0b0f14]/95 p-2 backdrop-blur-md md:hidden">
+        {modeOptions.map((mode) => {
+          const Icon = mode.icon;
+          const selected = mode.id === studioMode;
+
+          return (
+            <button
+              key={mode.id}
+              type="button"
+              onClick={() => replaceStudioUrl(mode.id)}
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] font-bold ${
+                selected ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'
+              }`}
+            >
+              <Icon size={16} />
+              {mode.label}
+            </button>
+          );
+        })}
+      </nav>
+
       <DeployModal
         isOpen={isDeployModalOpen}
         onClose={() => setIsDeployModalOpen(false)}
-        username={activeUser || 'developer'}
+        username={activeUser}
         markdown={markdown}
         workflowYaml={workflowYaml}
       />
+    </div>
+  );
+}
+
+interface ProfileWorkspaceProps {
+  activeUser: string;
+  copied: boolean;
+  isLoading: boolean;
+  markdown: string;
+  mobileTab: MobileTab;
+  modules: ReturnType<typeof useEditorStore.getState>['modules'];
+  profileData: ReturnType<typeof useProfileStore.getState>['profileData'];
+  setMobileTab: (tab: MobileTab) => void;
+  setViewMode: (mode: ViewMode) => void;
+  theme: ReturnType<typeof useEditorStore.getState>['theme'];
+  templateId: TemplateId;
+  viewMode: ViewMode;
+  onAddBadge: (slug: string) => void;
+  onApplyProjectMarkdown: (markdown: string) => void;
+  onApplyRolePreset: NonNullable<ReturnType<typeof useEditorStore.getState>['applyRolePreset']>;
+  onCopy: () => void;
+  onRemoveBadge: (slug: string) => void;
+  onTemplateChange: (templateId: TemplateId) => void;
+  onThemeChange: ReturnType<typeof useEditorStore.getState>['setTheme'];
+  onUpdateMarkdown: (markdown: string) => void;
+  onUpdateModule: ReturnType<typeof useEditorStore.getState>['updateModule'];
+}
+
+function ProfileWorkspace({
+  activeUser,
+  copied,
+  isLoading,
+  markdown,
+  mobileTab,
+  modules,
+  profileData,
+  setMobileTab,
+  setViewMode,
+  theme,
+  templateId,
+  viewMode,
+  onAddBadge,
+  onApplyProjectMarkdown,
+  onApplyRolePreset,
+  onCopy,
+  onRemoveBadge,
+  onTemplateChange,
+  onThemeChange,
+  onUpdateMarkdown,
+  onUpdateModule,
+}: ProfileWorkspaceProps) {
+  const showDesktopEditor = viewMode === 'code' || viewMode === 'split';
+  const showDesktopPreview = viewMode === 'preview' || viewMode === 'split';
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[390px_minmax(0,1fr)]">
+      <aside className={`${mobileTab === 'controls' ? 'block' : 'hidden'} xl:block`}>
+        <div className="overflow-hidden rounded-lg border border-white/10 bg-[#101720]">
+          <div className="border-b border-white/10 p-3">
+            {isLoading ? (
+              <ProfileSkeleton />
+            ) : profileData ? (
+              <ProfileHeader data={profileData} />
+            ) : (
+              <div className="rounded-md border border-white/10 bg-[#0b0f14] p-4">
+                <p className="text-sm font-black text-white">@{activeUser}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Profile controls are ready for local generation.</p>
+              </div>
+            )}
+          </div>
+          <div className="h-[calc(100vh-17rem)] min-h-[520px]">
+            <SidebarControls
+              modules={modules}
+              theme={theme}
+              templateId={templateId}
+              onUpdateModule={onUpdateModule}
+              onThemeChange={onThemeChange}
+              onTemplateChange={onTemplateChange}
+              onAddBadge={onAddBadge}
+              onRemoveBadge={onRemoveBadge}
+              onApplyRolePreset={onApplyRolePreset}
+              onApplyProjectMarkdown={onApplyProjectMarkdown}
+            />
+          </div>
+        </div>
+      </aside>
+
+      <section className={`${mobileTab === 'controls' ? 'hidden' : 'block'} min-w-0 xl:block`}>
+        <div className="flex min-h-[620px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0b0f14] xl:h-[calc(100vh-11rem)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-[#101720] px-3 py-2">
+            <div className="hidden items-center gap-1 rounded-md border border-white/10 bg-[#0b0f14] p-1 xl:flex">
+              {[
+                { id: 'code' as ViewMode, label: 'Code', icon: FiCode },
+                { id: 'split' as ViewMode, label: 'Split', icon: FiColumns },
+                { id: 'preview' as ViewMode, label: 'Preview', icon: FiEye },
+              ].map((view) => {
+                const Icon = view.icon;
+                const selected = view.id === viewMode;
+
+                return (
+                  <button
+                    key={view.id}
+                    type="button"
+                    onClick={() => setViewMode(view.id)}
+                    className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-bold transition-colors ${
+                      selected ? 'bg-cyan-300 text-slate-950' : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {view.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-1 rounded-md border border-white/10 bg-[#0b0f14] p-1 xl:hidden">
+              {[
+                { id: 'controls' as MobileTab, label: 'Controls', icon: FiSliders },
+                { id: 'editor' as MobileTab, label: 'Code', icon: FiCode },
+                { id: 'preview' as MobileTab, label: 'Preview', icon: FiEye },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const selected = tab.id === mobileTab;
+
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMobileTab(tab.id)}
+                    className={`inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-bold ${
+                      selected ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'
+                    }`}
+                  >
+                    <Icon size={13} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={onCopy}
+              className="inline-flex h-8 items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition-colors hover:bg-white/[0.08]"
+            >
+              {copied ? <FiCheck size={14} className="text-emerald-200" /> : <FiCopy size={14} />}
+              {copied ? 'Copied' : 'Copy README'}
+            </button>
+          </div>
+
+          <div className="hidden min-h-0 flex-1 xl:flex">
+            {showDesktopEditor && (
+              <div className={`${viewMode === 'split' ? 'w-1/2 border-r border-white/10' : 'w-full'} min-w-0`}>
+                <MarkdownEditor markdown={markdown} onChange={onUpdateMarkdown} readOnly={false} />
+              </div>
+            )}
+            {showDesktopPreview && (
+              <div className={`${viewMode === 'split' ? 'w-1/2' : 'w-full'} min-w-0`}>
+                <MarkdownPreview markdown={markdown} username={activeUser} />
+              </div>
+            )}
+          </div>
+
+          <div className="min-h-0 flex-1 xl:hidden">
+            {mobileTab === 'editor' && <MarkdownEditor markdown={markdown} onChange={onUpdateMarkdown} readOnly={false} />}
+            {mobileTab === 'preview' && <MarkdownPreview markdown={markdown} username={activeUser} />}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ArcadeLauncher({ username }: { username: string }) {
+  const games = [
+    {
+      id: 'snake',
+      title: 'Contribution Snake',
+      description: 'A fast canvas snake loop with commit tile scoring.',
+      icon: FiZap,
+      accent: 'border-emerald-300/30 bg-emerald-300/10 text-emerald-100',
+    },
+    {
+      id: 'brick-breaker',
+      title: 'Commit Brick Breaker',
+      description: 'Paddle and ball physics against contribution-style bricks.',
+      icon: FiGrid,
+      accent: 'border-cyan-300/30 bg-cyan-300/10 text-cyan-100',
+    },
+    {
+      id: 'pacman',
+      title: 'Pac-Man Commit Run',
+      description: 'Continuous dot collection along a commit-history lane.',
+      icon: FiActivity,
+      accent: 'border-amber-300/30 bg-amber-300/10 text-amber-100',
+    },
+  ];
+
+  return (
+    <div className="mx-auto max-w-6xl">
+      <div className="grid gap-4 md:grid-cols-3">
+        {games.map((game) => {
+          const Icon = game.icon;
+
+          return (
+            <a
+              key={game.id}
+              href={`/play/${encodeURIComponent(username)}/${game.id}`}
+              className="group rounded-lg border border-white/10 bg-[#101720] p-5 transition-colors hover:border-white/20 hover:bg-[#121c25]"
+            >
+              <span className={`grid h-12 w-12 place-items-center rounded-md border ${game.accent}`}>
+                <Icon size={21} />
+              </span>
+              <h2 className="mt-5 text-lg font-black text-white">{game.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{game.description}</p>
+              <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
+                Play for @{username}
+                <FiExternalLink size={15} className="transition-transform group-hover:translate-x-1" />
+              </span>
+            </a>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 rounded-lg border border-white/10 bg-[#101720] p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-md border border-rose-300/30 bg-rose-300/10 text-rose-100">
+            <FiPlay size={18} />
+          </span>
+          <div>
+            <h3 className="text-sm font-black text-white">Direct game routes</h3>
+            <p className="mt-1 text-xs text-slate-500">/play/{username}/snake, /play/{username}/brick-breaker, and /play/{username}/pacman</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WidgetWorkspace({
+  widgets,
+  widgetMarkdown,
+  onApply,
+  onCopy,
+}: {
+  widgets: WidgetCard[];
+  widgetMarkdown: string;
+  onApply: () => void;
+  onCopy: (value: string, label: string) => void;
+}) {
+  return (
+    <div className="mx-auto grid max-w-7xl gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-4 md:grid-cols-2">
+        {widgets.map((widget) => (
+          <article key={widget.title} className={`rounded-lg border ${widget.accent} p-4`}>
+            <div className="overflow-hidden rounded-md border border-white/10 bg-[#0b0f14]">
+              <img src={widget.previewUrl} alt={`${widget.title} preview`} className="h-32 w-full object-cover" />
+            </div>
+            <h2 className="mt-4 text-base font-black text-white">{widget.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{widget.description}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => onCopy(widget.markdown, widget.title)}
+                className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-slate-200 transition-colors hover:bg-white/[0.08]"
+              >
+                <FiCopy size={14} />
+                Copy block
+              </button>
+              <button
+                type="button"
+                onClick={onApply}
+                className="inline-flex items-center gap-2 rounded-md bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition-colors hover:bg-cyan-200"
+              >
+                <FiBookOpen size={14} />
+                Apply set
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <aside className="rounded-lg border border-white/10 bg-[#101720] p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase text-slate-500">Combined markdown</p>
+            <h2 className="mt-1 text-lg font-black text-white">Widget bundle</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => onCopy(widgetMarkdown, 'Widget bundle')}
+            className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08]"
+            title="Copy widget bundle"
+          >
+            <FiCopy size={15} />
+          </button>
+        </div>
+        <pre className="mt-4 max-h-[520px] overflow-auto whitespace-pre-wrap rounded-md border border-white/10 bg-[#0b0f14] p-3 text-xs leading-5 text-slate-300">
+          {widgetMarkdown}
+        </pre>
+      </aside>
     </div>
   );
 }
@@ -525,10 +839,10 @@ export default function StudioPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-screen flex items-center justify-center bg-slate-950 text-slate-300">
-          <div className="text-center space-y-3">
-            <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs font-mono font-medium text-slate-400">Loading Studio...</p>
+        <div className="grid min-h-screen place-items-center bg-[#0b0f14] text-slate-300">
+          <div className="text-center">
+            <FiRefreshCw className="mx-auto animate-spin text-cyan-200" size={28} />
+            <p className="mt-3 text-xs font-mono text-slate-500">Loading studio</p>
           </div>
         </div>
       }

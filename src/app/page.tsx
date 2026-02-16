@@ -1,392 +1,715 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useProfileStore } from '@/stores/profile-store';
-import { ALL_15_TEMPLATES } from '@/lib/template-engine';
+import { useMemo, useState, type FormEvent } from 'react';
+import type { IconType } from 'react-icons';
 import {
-  FiGithub,
+  FiActivity,
   FiArrowRight,
-  FiStar,
-  FiZap,
-  FiPlay,
+  FiBookOpen,
   FiBox,
-  FiCheck,
+  FiCheckCircle,
+  FiCode,
   FiCpu,
-  FiSliders,
   FiExternalLink,
+  FiGithub,
+  FiGrid,
+  FiLayers,
+  FiPlay,
+  FiRefreshCw,
+  FiShield,
+  FiSliders,
+  FiStar,
+  FiTerminal,
+  FiUploadCloud,
+  FiZap,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { ALL_15_TEMPLATES } from '@/lib/template-engine';
+import { useProfileStore } from '@/stores/profile-store';
+
+type StudioMode = 'profile' | 'canvas' | 'repo' | 'arcade' | 'widgets';
+
+interface FeatureLauncher {
+  id: StudioMode;
+  title: string;
+  label: string;
+  summary: string;
+  href: string;
+  icon: IconType;
+  accent: string;
+}
+
+interface PhaseAuditItem {
+  phase: string;
+  title: string;
+  status: 'Operational' | 'Partial' | 'Verified';
+  benchmark: string;
+  note: string;
+}
+
+const DEMO_USER = 'Dev-Nurul08';
+
+const featureLaunchers: FeatureLauncher[] = [
+  {
+    id: 'profile',
+    title: 'Profile README Studio',
+    label: 'Profile',
+    summary: 'Live markdown, rendered preview, presets, badges, trophies, widgets, and GitHub analytics.',
+    href: `/studio?user=${DEMO_USER}&mode=profile`,
+    icon: FiSliders,
+    accent: 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200',
+  },
+  {
+    id: 'canvas',
+    title: 'Contribution Art Painter',
+    label: 'Art',
+    summary: '52x7 grid painter with word stamps and exportable backdated commit script.',
+    href: `/studio?user=${DEMO_USER}&mode=canvas`,
+    icon: FiGrid,
+    accent: 'border-emerald-400/40 bg-emerald-400/10 text-emerald-200',
+  },
+  {
+    id: 'repo',
+    title: 'Project README Builder',
+    label: 'Repo',
+    summary: 'Repository docs generator with feature lists, architecture tree, env tables, and API tables.',
+    href: `/studio?user=${DEMO_USER}&mode=repo`,
+    icon: FiBox,
+    accent: 'border-amber-400/40 bg-amber-400/10 text-amber-200',
+  },
+  {
+    id: 'arcade',
+    title: 'GitHub Arcade',
+    label: 'Arcade',
+    summary: 'Playable canvas games for Snake, Brick Breaker, and Pac-Man style commit runs.',
+    href: `/studio?user=${DEMO_USER}&mode=arcade`,
+    icon: FiPlay,
+    accent: 'border-rose-400/40 bg-rose-400/10 text-rose-200',
+  },
+  {
+    id: 'widgets',
+    title: 'Dynamic SVG Widgets',
+    label: 'Widgets',
+    summary: 'Typing SVG, Spotify-style now playing, LeetCode, and blog embed generators.',
+    href: `/studio?user=${DEMO_USER}&mode=widgets`,
+    icon: FiActivity,
+    accent: 'border-indigo-300/40 bg-indigo-300/10 text-indigo-100',
+  },
+];
+
+const phaseAudit: PhaseAuditItem[] = [
+  {
+    phase: '01',
+    title: 'GitHub Aggregator',
+    status: 'Operational',
+    benchmark: '/api/user/scan/[username], GraphQL, REST fallback, cache',
+    note: 'Core scanner exists with 6-hour in-memory cache; Redis and token rotation are not present.',
+  },
+  {
+    phase: '02',
+    title: 'Split Workspace',
+    status: 'Verified',
+    benchmark: '15 template compile checks pass',
+    note: 'Profile studio has controls, editor, preview, and presets; drag-and-drop ordering is not implemented.',
+  },
+  {
+    phase: '03',
+    title: 'Typography Engine',
+    status: 'Operational',
+    benchmark: '/api/svg/header',
+    note: 'Server-rendered SVG headers cover cartoon, glitch, terminal, script, and minimal styles.',
+  },
+  {
+    phase: '04',
+    title: 'Contribution Painter',
+    status: 'Operational',
+    benchmark: 'Canvas painter and paint-graph.sh export',
+    note: 'The 52x7 painter and bash exporter work; a Node runner export is not present.',
+  },
+  {
+    phase: '05',
+    title: 'Arcade Games',
+    status: 'Partial',
+    benchmark: '/play/[username]/[game]',
+    note: 'Canvas games exist; levels are generated locally instead of using fetched contribution matrices.',
+  },
+  {
+    phase: '06',
+    title: 'SVG Dividers',
+    status: 'Verified',
+    benchmark: '/api/svg/divider',
+    note: 'Eight separator styles are implemented as server-rendered SVG responses.',
+  },
+  {
+    phase: '07',
+    title: 'Badges And Trophies',
+    status: 'Operational',
+    benchmark: 'Badge registry, picker, trophy controls',
+    note: 'Badge and trophy customization exists; the registry is not a full 250-plus item catalog yet.',
+  },
+  {
+    phase: '08',
+    title: 'Project README Builder',
+    status: 'Operational',
+    benchmark: 'compileProjectReadme',
+    note: 'Project README generation works from form data; automatic repo parsing/tree-sitter is not implemented.',
+  },
+  {
+    phase: '09',
+    title: 'Dynamic Widgets',
+    status: 'Partial',
+    benchmark: '/api/svg/spotify and widget compilers',
+    note: 'Embeddable SVG/widget strings exist; live provider OAuth sync is not implemented.',
+  },
+  {
+    phase: '10',
+    title: 'GitHub Deployer',
+    status: 'Partial',
+    benchmark: '/api/github/deploy',
+    note: 'Direct deploy works with PAT/env token; full OAuth flow is not present.',
+  },
+];
+
+const benchmarkCards = [
+  {
+    label: 'Build',
+    value: 'Next 16 build',
+    detail: 'Production routes compile with Turbopack.',
+    icon: FiCheckCircle,
+  },
+  {
+    label: 'Templates',
+    value: '15 / 15 presets',
+    detail: 'README compiler validates every preset.',
+    icon: FiLayers,
+  },
+  {
+    label: 'Routes',
+    value: '13 app routes',
+    detail: 'Studio, arcade, API, and SVG surfaces are present.',
+    icon: FiCpu,
+  },
+];
+
+const statusStyles: Record<PhaseAuditItem['status'], string> = {
+  Operational: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-200',
+  Partial: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
+  Verified: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
+};
 
 export default function HomePage() {
-  const [inputValue, setInputValue] = useState('');
-  const [selectedPreviewTab, setSelectedPreviewTab] = useState<string>('beast-mode-neon');
-  const { fetchProfile, isLoading } = useProfileStore();
   const router = useRouter();
+  const [inputValue, setInputValue] = useState('');
+  const [activeFeature, setActiveFeature] = useState<StudioMode>('profile');
+  const [activeTemplateId, setActiveTemplateId] = useState(ALL_15_TEMPLATES[0]?.id ?? 'beast-mode-neon');
+  const { fetchProfile, isLoading } = useProfileStore();
 
-  const handleScan = async (usernameToScan?: string) => {
-    const target = (usernameToScan || inputValue).trim();
+  const activeTemplate = useMemo(
+    () => ALL_15_TEMPLATES.find((template) => template.id === activeTemplateId) ?? ALL_15_TEMPLATES[0],
+    [activeTemplateId]
+  );
+
+  const activeFeatureData = featureLaunchers.find((feature) => feature.id === activeFeature) ?? featureLaunchers[0];
+
+  const routeForMode = (username: string, mode: StudioMode) => {
+    if (mode === 'arcade') {
+      return `/play/${encodeURIComponent(username)}/snake`;
+    }
+
+    return `/studio?user=${encodeURIComponent(username)}&mode=${mode}`;
+  };
+
+  const handleScan = async (mode: StudioMode = activeFeature, usernameOverride?: string) => {
+    const target = (usernameOverride || inputValue).trim();
+
     if (!target) {
-      toast.error('Please enter a GitHub username');
+      toast.error('Enter a GitHub username first.');
       return;
     }
 
-    const toastId = toast.loading(`Scanning @${target}...`);
+    const toastId = toast.loading(`Scanning @${target}`);
+
     try {
       const data = await fetchProfile(target);
-      if (data) {
-        toast.success(`Found @${data.profile.username}!`, { id: toastId });
-        router.push(`/studio?user=${encodeURIComponent(data.profile.username)}`);
-      } else {
-        toast.dismiss(toastId);
-        router.push(`/studio?user=${encodeURIComponent(target)}`);
-      }
+      const resolvedUsername = data?.profile.username || target;
+
+      toast.success(data ? `Loaded @${resolvedUsername}` : `Opening @${resolvedUsername}`, { id: toastId });
+      router.push(routeForMode(resolvedUsername, mode));
     } catch {
       toast.dismiss(toastId);
-      router.push(`/studio?user=${encodeURIComponent(target)}`);
+      router.push(routeForMode(target, mode));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleScan();
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void handleScan();
   };
 
-  const PHASES = [
-    { num: '01', title: 'GraphQL v4 Aggregator', desc: 'Queries 52-week calendar, contributions, stars & streaks with 6h TTL cache.', icon: '⚡', color: 'from-blue-500/20 to-cyan-500/20 border-cyan-500/30' },
-    { num: '02', title: '15 Designer Presets', desc: 'Beast Mode Neon, Cyberpunk Glitch, Dracula Dark, Nord, Retro Terminal & more.', icon: '🎨', color: 'from-purple-500/20 to-pink-500/20 border-purple-500/30' },
-    { num: '03', title: '3D & Glitch Typography', desc: 'Dynamic SVG headers with 3D bubble fonts, glitch shifts & terminal prompts.', icon: '✨', color: 'from-amber-500/20 to-orange-500/20 border-amber-500/30' },
-    { num: '04', title: '52x7 Canvas Art Painter', desc: 'Interactive dot-matrix painter with text-to-pixel & paint-graph.sh export.', icon: '🖌️', color: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30' },
-    { num: '05', title: 'Interactive Game Suite', desc: 'Playable browser Snake, Brick Breaker & Pac-Man with real GitHub commit tiles.', icon: '🎮', color: 'from-rose-500/20 to-red-500/20 border-rose-500/30' },
-    { num: '06', title: 'Animated SVG Dividers', desc: '8 dynamic separators including Rainbow Flow, Snake Crawl, EQ Waves & Laser.', icon: '🌈', color: 'from-violet-500/20 to-indigo-500/20 border-violet-500/30' },
-    { num: '07', title: '250+ Tech Stack Matrix', desc: 'Categorized badges with dynamic proficiency pills & GitHub achievement trophies.', icon: '🏆', color: 'from-yellow-500/20 to-amber-500/20 border-yellow-500/30' },
-    { num: '08', title: 'Project Repository Mode', desc: 'Architecture ASCII tree generator, Docker guides & API documentation builder.', icon: '📦', color: 'from-sky-500/20 to-blue-500/20 border-sky-500/30' },
-    { num: '09', title: 'Dynamic Widgets Suite', desc: 'Live Spotify now-playing player, LeetCode ratings, typing SVG & blog RSS sync.', icon: '🎵', color: 'from-green-500/20 to-emerald-500/20 border-green-500/30' },
-    { num: '10', title: '1-Click GitHub Deployer', desc: 'Instant deploy directly to username/username with automated Actions provisioning.', icon: '🚀', color: 'from-fuchsia-500/20 to-purple-500/20 border-fuchsia-500/30' },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white relative overflow-hidden">
-      {/* Dynamic Background Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-blue-600/15 via-purple-600/10 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-1/3 -left-48 w-96 h-96 bg-emerald-600/10 blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-2/3 -right-48 w-96 h-96 bg-pink-600/10 blur-3xl pointer-events-none -z-10" />
+    <main className="min-h-screen bg-[#0b0f14] text-slate-100 selection:bg-cyan-500 selection:text-slate-950">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f14]/90 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="grid h-9 w-9 place-items-center rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-200">
+              <FiGithub size={19} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-black text-white">SynthetixGit</span>
+              <span className="block text-[11px] font-medium text-slate-400">README generator studio</span>
+            </span>
+          </Link>
 
-      {/* ── Top Navigation Bar ── */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-              <FiGithub size={22} />
-            </div>
-            <div>
-              <span className="font-black text-lg tracking-tight text-white">Synthetix<span className="text-blue-400">Git</span></span>
-              <span className="ml-2 text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                v1.0.0
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Nav Links */}
-          <div className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-400">
-            <a href="#presets" className="hover:text-white transition-colors">15 Presets</a>
-            <a href="#canvas" className="hover:text-emerald-400 transition-colors flex items-center gap-1">
-              <span>52x7 Canvas</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded">New</span>
+          <nav className="hidden items-center gap-5 text-xs font-semibold text-slate-400 md:flex">
+            <a href="#workspace" className="transition-colors hover:text-white">
+              Workspace
             </a>
-            <a href="#arcade" className="hover:text-purple-400 transition-colors">Arcade Games</a>
-            <a href="#phases" className="hover:text-white transition-colors">10 Phases</a>
-          </div>
+            <a href="#features" className="transition-colors hover:text-white">
+              Features
+            </a>
+            <a href="#benchmarks" className="transition-colors hover:text-white">
+              Benchmarks
+            </a>
+            <a href="#audit" className="transition-colors hover:text-white">
+              Phase Audit
+            </a>
+          </nav>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => router.push('/studio?user=Dev-Nurul08')}
-              className="text-xs sm:text-sm font-bold px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition-all cursor-pointer shadow-sm hover:border-slate-600"
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/studio?user=${DEMO_USER}&mode=profile`}
+              className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08]"
+              title="Open studio"
             >
-              Open Studio
-            </button>
+              <FiCode size={16} />
+            </Link>
             <a
               href="https://github.com/Dev-Nurul08/SynthetixGit"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all flex items-center gap-2 shadow-md shadow-blue-600/25 cursor-pointer"
+              className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08]"
+              title="Open GitHub repository"
             >
-              <FiStar size={15} />
-              <span className="hidden sm:inline">Star Repository</span>
+              <FiStar size={16} />
             </a>
           </div>
         </div>
       </header>
 
-      {/* ── Main Hero Section ── */}
-      <main className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center">
-        {/* Animated Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-blue-950/60 border border-blue-500/30 text-blue-300 mb-8 shadow-inner animate-fade-in">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>The Ultimate GitHub Profile, README & Contribution Studio</span>
-        </div>
-
-        {/* Hero Title */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-4xl">
-          Craft <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400">Beast-Mode</span> Developer Profiles & READMEs.
-        </h1>
-
-        {/* Subtitle */}
-        <p className="mt-6 text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          15 designer presets, live GitHub GraphQL v4 analytics, 52x7 contribution art painter, playable arcade games, and 1-Click GitHub Actions publishing.
-        </p>
-
-        {/* ── Live Username Scanner Card ── */}
-        <div className="mt-10 w-full max-w-2xl p-2.5 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl">
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2">
-            <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-950 rounded-2xl border border-slate-800 w-full focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-              <FiGithub size={20} className="text-slate-400 shrink-0" />
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter GitHub username (e.g. Dev-Nurul08)..."
-                className="bg-transparent text-sm sm:text-base font-mono text-white placeholder-slate-500 outline-none w-full"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !inputValue.trim()}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-600/30 disabled:opacity-40 shrink-0"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Scanning...</span>
-                </>
-              ) : (
-                <>
-                  <span>Scan & Build Studio</span>
-                  <FiArrowRight size={18} />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Quick Profile Suggestions */}
-          <div className="mt-3 flex items-center justify-center gap-2 flex-wrap text-xs text-slate-400">
-            <span className="font-semibold">Try Live Demo:</span>
-            {['Dev-Nurul08', 'torvalds', 'shadcn', 'leerob'].map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => {
-                  setInputValue(name);
-                  handleScan(name);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-mono transition-all cursor-pointer"
-              >
-                @{name}
-              </button>
-            ))}
+      <section id="workspace" className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)] lg:items-center">
+        <div className="space-y-7">
+          <div className="inline-flex items-center gap-2 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200">
+            <FiShield size={14} />
+            Next 16 App Router verified locally
           </div>
-        </div>
 
-        {/* ── Visual Studio Workspace Preview ── */}
-        <div id="presets" className="mt-20 w-full text-left space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                <FiZap className="text-amber-400" />
-                <span>15 Designer Profile Presets</span>
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">Instant high-contrast themes tuned for modern developers</p>
+          <div className="space-y-4">
+            <h1 className="max-w-4xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+              Build a GitHub README, contribution artwork, and repo docs from one studio.
+            </h1>
+            <p className="max-w-2xl text-base leading-8 text-slate-300">
+              A modern workspace for profile READMEs, animated SVG blocks, project documentation,
+              playable commit games, and direct GitHub deployment.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="max-w-3xl rounded-lg border border-white/10 bg-[#101720] p-2 shadow-2xl shadow-black/30">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="flex min-h-12 flex-1 items-center gap-3 rounded-md border border-white/10 bg-[#0b0f14] px-3 focus-within:border-cyan-300">
+                <FiGithub size={18} className="shrink-0 text-slate-400" />
+                <input
+                  value={inputValue}
+                  onChange={(event) => setInputValue(event.target.value)}
+                  placeholder="GitHub username"
+                  className="h-full min-w-0 flex-1 bg-transparent font-mono text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={isLoading || !inputValue.trim()}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-cyan-300 px-5 text-sm font-black text-slate-950 transition-colors hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? <FiRefreshCw className="animate-spin" size={16} /> : <FiArrowRight size={17} />}
+                Open Generator
+              </button>
             </div>
 
-            {/* Preset switcher pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 max-w-full">
-              {ALL_15_TEMPLATES.slice(0, 5).map((tpl) => (
+            <div className="mt-3 flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400">
+              <span className="font-semibold text-slate-500">Quick scan:</span>
+              {['Dev-Nurul08', 'torvalds', 'shadcn', 'leerob'].map((username) => (
                 <button
-                  key={tpl.id}
+                  key={username}
                   type="button"
-                  onClick={() => setSelectedPreviewTab(tpl.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 border ${
-                    selectedPreviewTab === tpl.id
-                      ? 'bg-blue-600 text-white border-blue-400 shadow-md'
-                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                  }`}
+                  onClick={() => {
+                    setInputValue(username);
+                    void handleScan(activeFeature, username);
+                  }}
+                  className="rounded-md border border-white/10 bg-white/[0.03] px-2.5 py-1 font-mono text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
                 >
-                  <span className="mr-1">{tpl.icon}</span>
-                  <span>{tpl.name}</span>
+                  @{username}
                 </button>
               ))}
             </div>
-          </div>
+          </form>
 
-          {/* Preset Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {ALL_15_TEMPLATES.map((tpl) => (
-              <div
-                key={tpl.id}
-                onClick={() => router.push(`/studio?user=Dev-Nurul08&template=${tpl.id}`)}
-                className={`p-4 rounded-2xl bg-slate-900/80 border transition-all cursor-pointer hover:scale-102 hover:shadow-xl group ${
-                  selectedPreviewTab === tpl.id ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="text-2xl mb-2">{tpl.icon}</div>
-                <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{tpl.name}</h3>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{tpl.desc}</p>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-400 mt-3">
-                  <span>Open Preset</span>
-                  <FiArrowRight size={10} className="group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            ))}
+          <div className="grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {featureLaunchers.slice(0, 3).map((feature) => {
+              const Icon = feature.icon;
+
+              return (
+                <button
+                  key={feature.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveFeature(feature.id);
+                    if (inputValue.trim()) {
+                      void handleScan(feature.id);
+                    } else {
+                      router.push(feature.href);
+                    }
+                  }}
+                  className="group flex min-h-28 items-start gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4 text-left transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+                >
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-md border ${feature.accent}`}>
+                    <Icon size={18} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-black text-white">{feature.title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-400">{feature.summary}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── 52x7 Contribution Canvas Section ── */}
-        <div id="canvas" className="mt-20 w-full text-left p-8 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 shadow-2xl relative">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-2">
-                <span>🎨 Phase 4 Innovation</span>
+        <div className="rounded-lg border border-white/10 bg-[#101720] p-3 shadow-2xl shadow-black/40">
+          <div className="rounded-md border border-white/10 bg-[#0c1118]">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                <FiTerminal size={15} className="text-cyan-200" />
+                <span>SynthetixGit workspace</span>
               </div>
-              <h2 className="text-2xl font-black text-white">52x7 GitHub Contribution Canvas Art Painter</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Draw pixel art or type text to light up your GitHub contribution calendar in green tiles.
-              </p>
+              <span className={`rounded-md border px-2 py-1 text-[11px] font-bold ${activeFeatureData.accent}`}>
+                {activeFeatureData.label}
+              </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => router.push('/studio?user=Dev-Nurul08')}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer transition-all shadow-lg shadow-emerald-600/25 shrink-0"
+            <div className="grid gap-3 p-4 lg:grid-cols-[180px_minmax(0,1fr)]">
+              <div className="space-y-2">
+                {featureLaunchers.map((feature) => {
+                  const Icon = feature.icon;
+                  const selected = feature.id === activeFeature;
+
+                  return (
+                    <button
+                      key={feature.id}
+                      type="button"
+                      onClick={() => setActiveFeature(feature.id)}
+                      className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                        selected
+                          ? 'border-cyan-300/40 bg-cyan-300/10 text-cyan-100'
+                          : 'border-white/10 bg-white/[0.025] text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Icon size={14} />
+                      {feature.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="min-h-[380px] rounded-md border border-white/10 bg-[#0b0f14] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase text-cyan-200">{activeFeatureData.label} surface</p>
+                    <h2 className="mt-1 text-2xl font-black text-white">{activeFeatureData.title}</h2>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-400">{activeFeatureData.summary}</p>
+                  </div>
+                  <Link
+                    href={activeFeatureData.href}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:bg-white/[0.08]"
+                    title={`Open ${activeFeatureData.title}`}
+                  >
+                    <FiExternalLink size={15} />
+                  </Link>
+                </div>
+
+                {activeFeature === 'canvas' ? <ContributionGraphPreview /> : <ReadmePreviewPanel />}
+
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {benchmarkCards.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <div key={item.label} className="rounded-md border border-white/10 bg-white/[0.025] p-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                          <Icon size={14} className="text-emerald-200" />
+                          {item.label}
+                        </div>
+                        <p className="mt-2 text-sm font-black text-white">{item.value}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-slate-500">{item.detail}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="border-y border-white/10 bg-[#0f151d]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase text-amber-200">Independent generators</p>
+              <h2 className="mt-2 text-3xl font-black text-white">Navigation built around the real tools</h2>
+            </div>
+            <Link
+              href={`/studio?user=${DEMO_USER}&mode=profile`}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/[0.09]"
             >
-              <span>Launch Canvas Studio</span>
-              <FiArrowRight size={14} />
-            </button>
+              Open full studio
+              <FiArrowRight size={16} />
+            </Link>
           </div>
 
-          {/* Mini Interactive Preview Grid */}
-          <div className="overflow-x-auto p-4 rounded-2xl bg-slate-950 border border-slate-800">
-            <div className="inline-grid grid-rows-7 grid-flow-col gap-1 min-w-[700px]">
-              {Array.from({ length: 7 }).map((_, r) =>
-                Array.from({ length: 52 }).map((_, c) => {
-                  const isPainted = (c > 5 && c < 15 && (r === 1 || r === 5 || c === 10)) || (c > 20 && c < 30 && r % 2 === 0);
-                  return (
-                    <div
-                      key={`${c}-${r}`}
-                      className={`w-3 h-3 rounded-xs ${isPainted ? 'bg-emerald-400 shadow-sm shadow-emerald-400/40' : 'bg-slate-900'}`}
-                    />
-                  );
-                })
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {featureLaunchers.map((feature) => {
+              const Icon = feature.icon;
+
+              return (
+                <Link
+                  key={feature.id}
+                  href={feature.href}
+                  className="group rounded-lg border border-white/10 bg-[#0b0f14] p-4 transition-colors hover:border-white/20 hover:bg-[#111a23]"
+                >
+                  <span className={`grid h-11 w-11 place-items-center rounded-md border ${feature.accent}`}>
+                    <Icon size={19} />
+                  </span>
+                  <h3 className="mt-4 text-base font-black text-white">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">{feature.summary}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-cyan-200">
+                    Launch
+                    <FiArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="benchmarks" className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <p className="text-xs font-bold uppercase text-emerald-200">Benchmarks</p>
+          <h2 className="mt-2 text-3xl font-black text-white">Checks now match the roadmap surface.</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-400">
+            The project has a production build gate, an ESLint gate, and a local verification command for
+            the 15 README templates.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          {benchmarkCards.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div key={item.label} className="rounded-lg border border-white/10 bg-[#101720] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-slate-500">{item.label}</span>
+                  <Icon size={17} className="text-emerald-200" />
+                </div>
+                <p className="mt-4 text-xl font-black text-white">{item.value}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{item.detail}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section id="presets" className="border-y border-white/10 bg-[#101720]">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+          <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+            <div>
+              <p className="text-xs font-bold uppercase text-cyan-200">Preset engine</p>
+              <h2 className="mt-2 text-3xl font-black text-white">Fifteen README styles, one compiler.</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-400">
+                Pick a preset and open it directly in the profile workspace for the demo account.
+              </p>
+
+              {activeTemplate && (
+                <Link
+                  href={`/studio?user=${DEMO_USER}&mode=profile&template=${activeTemplate.id}`}
+                  className="mt-5 inline-flex items-center gap-2 rounded-md bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950 transition-colors hover:bg-cyan-200"
+                >
+                  Open {activeTemplate.name}
+                  <FiArrowRight size={16} />
+                </Link>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* ── Playable Arcade Games Section ── */}
-        <div id="arcade" className="mt-20 w-full text-left space-y-6">
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <FiPlay className="text-pink-400" />
-              <span>Interactive HTML5 Arcade Games</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">Play games in the browser using your real GitHub commit history</p>
-          </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {ALL_15_TEMPLATES.map((template) => {
+                const selected = template.id === activeTemplateId;
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              onClick={() => router.push('/play/Dev-Nurul08/snake')}
-              className="p-6 rounded-3xl bg-slate-900 border border-slate-800 hover:border-emerald-500 transition-all cursor-pointer group shadow-xl"
-            >
-              <div className="text-3xl mb-3">🐍</div>
-              <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Contribution Snake</h3>
-              <p className="text-xs text-slate-400 mt-1">Eat your commit green tiles and grow your developer snake.</p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 mt-4">
-                <span>Play Live</span>
-                <FiExternalLink size={12} />
-              </span>
-            </div>
-
-            <div
-              onClick={() => router.push('/play/Dev-Nurul08/brick-breaker')}
-              className="p-6 rounded-3xl bg-slate-900 border border-slate-800 hover:border-blue-500 transition-all cursor-pointer group shadow-xl"
-            >
-              <div className="text-3xl mb-3">🧱</div>
-              <h3 className="text-base font-bold text-white group-hover:text-blue-400 transition-colors">Commit Brick Breaker</h3>
-              <p className="text-xs text-slate-400 mt-1">Smash contribution bricks with a physics bouncing ball.</p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 mt-4">
-                <span>Play Live</span>
-                <FiExternalLink size={12} />
-              </span>
-            </div>
-
-            <div
-              onClick={() => router.push('/play/Dev-Nurul08/pacman')}
-              className="p-6 rounded-3xl bg-slate-900 border border-slate-800 hover:border-amber-500 transition-all cursor-pointer group shadow-xl"
-            >
-              <div className="text-3xl mb-3">👾</div>
-              <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">Pac-Man Commit Run</h3>
-              <p className="text-xs text-slate-400 mt-1">Chomp commit corridor dots while evading bugs in real time.</p>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 mt-4">
-                <span>Play Live</span>
-                <FiExternalLink size={12} />
-              </span>
+                return (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => setActiveTemplateId(template.id)}
+                    className={`rounded-lg border p-4 text-left transition-colors ${
+                      selected
+                        ? 'border-cyan-300/40 bg-cyan-300/10'
+                        : 'border-white/10 bg-[#0b0f14] hover:border-white/20 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className="text-[11px] font-mono font-bold uppercase text-slate-500">
+                      {template.id}
+                    </span>
+                    <h3 className="mt-2 text-sm font-black text-white">{template.name}</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">{template.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* ── 10 Core Architectural Phases ── */}
-        <div id="phases" className="mt-20 w-full text-left space-y-6">
+      <section id="audit" className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <FiCpu className="text-blue-400" />
-              <span>The 10 Core Architectural Phases</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">Full technical breakdown of SynthetixGit architecture</p>
+            <p className="text-xs font-bold uppercase text-rose-200">Phase audit</p>
+            <h2 className="mt-2 text-3xl font-black text-white">What is complete, what is partial, and what is benchmarked.</h2>
           </div>
+          <a
+            href="https://github.com/Dev-Nurul08/SynthetixGit/blob/main/docs/ARCHITECTURE.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-white/[0.08]"
+          >
+            Architecture file
+            <FiBookOpen size={15} />
+          </a>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {PHASES.map((phase) => (
-              <div
-                key={phase.num}
-                className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-lg shrink-0">
-                  {phase.icon}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-blue-400">PHASE {phase.num}</span>
-                    <h3 className="text-sm font-bold text-white">{phase.title}</h3>
+        <div className="mt-6 grid gap-3 lg:grid-cols-2">
+          {phaseAudit.map((item) => (
+            <article key={item.phase} className="rounded-lg border border-white/10 bg-[#101720] p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-md border border-white/10 bg-[#0b0f14] font-mono text-sm font-black text-cyan-200">
+                    {item.phase}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-black text-white">{item.title}</h3>
+                    <p className="mt-1 text-[11px] font-mono text-slate-500">{item.benchmark}</p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{phase.desc}</p>
                 </div>
+                <span className={`rounded-md border px-2 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}>
+                  {item.status}
+                </span>
               </div>
-            ))}
-          </div>
+              <p className="mt-4 text-sm leading-6 text-slate-400">{item.note}</p>
+            </article>
+          ))}
         </div>
-      </main>
+      </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-slate-300">SynthetixGit</span>
-            <span>•</span>
-            <span>The All-in-One Developer Profile & README Studio</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-slate-400">
-            <a href="https://github.com/Dev-Nurul08/SynthetixGit" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-              GitHub Repository
+      <footer className="border-t border-white/10 bg-[#080b10]">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:px-6">
+          <span>SynthetixGit - Developer profile and README studio</span>
+          <span className="flex items-center gap-4">
+            <Link href={`/studio?user=${DEMO_USER}&mode=canvas`} className="hover:text-white">
+              Contribution art
+            </Link>
+            <Link href={`/studio?user=${DEMO_USER}&mode=repo`} className="hover:text-white">
+              Project README
+            </Link>
+            <a href="https://github.com/Dev-Nurul08" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+              @Dev-Nurul08
             </a>
-            <span>•</span>
-            <a href="https://github.com/Dev-Nurul08" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-              Author: @Dev-Nurul08
-            </a>
-          </div>
+          </span>
         </div>
       </footer>
+    </main>
+  );
+}
+
+function ReadmePreviewPanel() {
+  return (
+    <div className="mt-6 rounded-md border border-white/10 bg-[#111820]">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+        <span className="flex items-center gap-2 text-xs font-bold text-slate-300">
+          <FiBookOpen size={14} className="text-cyan-200" />
+          README.md
+        </span>
+        <span className="rounded bg-emerald-300/10 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
+          Live preview
+        </span>
+      </div>
+      <div className="space-y-3 p-4">
+        <div className="h-8 w-3/4 rounded bg-white/[0.12]" />
+        <div className="h-3 w-full rounded bg-white/[0.08]" />
+        <div className="h-3 w-5/6 rounded bg-white/[0.08]" />
+        <div className="grid gap-2 pt-2 sm:grid-cols-3">
+          <div className="h-20 rounded-md border border-cyan-300/20 bg-cyan-300/10" />
+          <div className="h-20 rounded-md border border-emerald-300/20 bg-emerald-300/10" />
+          <div className="h-20 rounded-md border border-amber-300/20 bg-amber-300/10" />
+        </div>
+        <div className="grid grid-cols-8 gap-1 pt-2">
+          {Array.from({ length: 32 }).map((_, index) => (
+            <span
+              key={index}
+              className={`h-5 rounded ${
+                index % 5 === 0
+                  ? 'bg-cyan-300/70'
+                  : index % 3 === 0
+                    ? 'bg-emerald-300/60'
+                    : 'bg-white/[0.08]'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContributionGraphPreview() {
+  return (
+    <div className="mt-6 overflow-hidden rounded-md border border-white/10 bg-[#111820] p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-300">52 x 7 contribution canvas</span>
+        <span className="rounded bg-emerald-300/10 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
+          Script export
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[620px] grid-flow-col grid-rows-7 gap-1">
+          {Array.from({ length: 52 }).map((_, column) =>
+            Array.from({ length: 7 }).map((__, row) => {
+              const active =
+                (column > 5 && column < 16 && (row === 1 || row === 5 || column === 6 || column === 15)) ||
+                (column > 22 && column < 33 && (row === 0 || row === 3 || row === 6)) ||
+                (column > 38 && column < 48 && row === Math.abs((column % 7) - 3));
+
+              return (
+                <span
+                  key={`${column}-${row}`}
+                  className={`h-2.5 w-2.5 rounded-[2px] ${
+                    active ? 'bg-emerald-300 shadow-sm shadow-emerald-300/30' : 'bg-white/[0.08]'
+                  }`}
+                />
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

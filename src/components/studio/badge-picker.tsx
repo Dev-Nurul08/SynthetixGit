@@ -14,8 +14,19 @@ interface BadgePickerProps {
   selectedSlugs: string[];
   onAdd: (slug: string) => void;
   onRemove: (slug: string) => void;
-  onApplyRole?: (role: 'frontend' | 'backend' | 'fullstack' | 'devops' | 'ai-ml' | 'mobile') => void;
+  onApplyRole?: (role: RolePreset) => void;
 }
+
+type RolePreset = 'frontend' | 'backend' | 'fullstack' | 'devops' | 'ai-ml' | 'mobile';
+
+const ROLE_PRESETS: { id: RolePreset; label: string }[] = [
+  { id: 'fullstack', label: '+ Full Stack' },
+  { id: 'frontend', label: '+ Frontend' },
+  { id: 'backend', label: '+ Backend' },
+  { id: 'devops', label: '+ DevOps' },
+  { id: 'ai-ml', label: '+ AI / ML' },
+  { id: 'mobile', label: '+ Mobile' },
+];
 
 export function BadgePicker({ selectedSlugs, onAdd, onRemove, onApplyRole }: BadgePickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,18 +56,11 @@ export function BadgePicker({ selectedSlugs, onAdd, onRemove, onApplyRole }: Bad
             <span>Role Badges Quick-Add</span>
           </div>
           <div className="flex flex-wrap gap-1">
-            {[
-              { id: 'fullstack', label: '+ Full Stack' },
-              { id: 'frontend', label: '+ Frontend' },
-              { id: 'backend', label: '+ Backend' },
-              { id: 'devops', label: '+ DevOps' },
-              { id: 'ai-ml', label: '+ AI / ML' },
-              { id: 'mobile', label: '+ Mobile' },
-            ].map((role) => (
+            {ROLE_PRESETS.map((role) => (
               <button
                 key={role.id}
                 type="button"
-                onClick={() => onApplyRole(role.id as any)}
+                onClick={() => onApplyRole(role.id)}
                 className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/[0.04] hover:bg-blue-500/20 text-slate-300 hover:text-blue-300 border border-white/[0.08] hover:border-blue-500/30 transition-all cursor-pointer"
               >
                 {role.label}

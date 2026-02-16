@@ -16,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SynthetixGit — GitHub Profile & README Studio",
+  title: "SynthetixGit - GitHub Profile & README Studio",
   description:
-    "Craft stunning GitHub profile READMEs in seconds. Scan any username, toggle stats cards, badges, themes, and export — all from a gorgeous glassmorphism dark-mode studio.",
+    "Craft GitHub profile READMEs, contribution art, dynamic SVG widgets, and project documentation from one modern studio.",
   keywords: [
     "GitHub",
     "README",
@@ -27,27 +27,28 @@ export const metadata: Metadata = {
     "markdown",
     "developer tools",
     "GitHub stats",
-    "contribution snake",
+    "contribution art",
+    "project documentation",
   ],
   authors: [{ name: "SynthetixGit" }],
   openGraph: {
-    title: "SynthetixGit — GitHub Profile & README Studio",
-    description: "Craft stunning GitHub profile READMEs in seconds.",
+    title: "SynthetixGit - GitHub Profile & README Studio",
+    description: "Craft GitHub profile READMEs, contribution art, widgets, and project documentation.",
     type: "website",
   },
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-sans)" }}>
+      <body className="min-h-full flex flex-col">
         {children}
         <Toaster
           position="bottom-right"
@@ -56,7 +57,7 @@ export default function RootLayout({
               background: "var(--bg-card)",
               color: "var(--text-primary)",
               border: "1px solid var(--border-primary)",
-              borderRadius: "var(--radius-md)",
+              borderRadius: "8px",
               fontSize: "14px",
             },
           }}

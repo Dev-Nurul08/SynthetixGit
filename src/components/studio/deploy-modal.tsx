@@ -46,8 +46,9 @@ export function DeployModal({
 
       setDeployedRepoUrl(data.repoUrl);
       toast.success('Successfully deployed to your GitHub profile repo!');
-    } catch (err: any) {
-      toast.error(err.message || 'Deployment error');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Deployment error';
+      toast.error(message);
     } finally {
       setIsDeploying(false);
     }
