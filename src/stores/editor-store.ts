@@ -12,6 +12,7 @@ import {
 } from '@/lib/template-engine';
 import type { UserProfileData } from '@/lib/github-service';
 import { suggestBadgesFromLanguages } from '@/lib/badge-registry';
+import { applyParsedReadmeToModules, type ParsedReadmeData } from '@/lib/readme-parser';
 
 interface EditorState {
   markdown: string;
@@ -32,6 +33,7 @@ interface EditorState {
   setMarkdown: (markdown: string) => void;
   regenerateMarkdown: (username: string, profileData?: UserProfileData | null) => void;
   initializeFromProfile: (profileData: UserProfileData) => void;
+  importFromExistingReadme: (parsed: import('@/lib/readme-parser').ParsedReadmeData, username: string, profileData?: UserProfileData | null) => void;
   addBadge: (slug: string) => void;
   removeBadge: (slug: string) => void;
   setBadges: (slugs: string[]) => void;
@@ -57,87 +59,286 @@ export const useEditorStore = create<EditorState>()(
 
       applyTemplatePreset: (templateId, username, profileData) => {
         const current = get().modules;
+        const displayName = profileData?.profile?.name || username;
         let updated: ModuleConfig = { ...current };
 
-        if (templateId === 'beast-mode-neon') {
-          updated = {
-            ...updated,
-            headerBanner: {
-              enabled: true,
-              headerStyle: 'venom-capsule',
-              title: profileData?.profile?.name || username,
-              subtitle: 'Full-Stack & MERN Developer',
-              typingLines: [
-                'Diploma in Computer Student @ VidhyaDeep University 🎓',
-                'Frontend Ninja ⚡ Backend Explorer 🔍',
-                'JavaScript Enthusiast 💻 DSA Master 🏆',
-              ],
-              bannerColor: 'gradient',
-            },
-            beastModeDashboard: {
-              enabled: true,
-              showProfileViews: true,
-              showGrowthMetrics: true,
-              showOpenToWork: true,
-              showHireMe: true,
-              showStreakCard: true,
-              showWakaTime: true,
-              email: 'shaikhnurul8200@gmail.com',
-            },
-            githubAnalytics: {
-              enabled: true,
-              showProfileDetailsCard: true,
-              showReposPerLanguage: true,
-              showMostCommitLanguage: true,
-              showStatsCard: true,
-              showActivityWave: true,
-              showTrophies: true,
-              showNextAchievements: true,
-            },
-            educationAndSkills: {
-              ...updated.educationAndSkills,
-              enabled: true,
-            },
-            techArsenal: {
-              ...updated.techArsenal,
-              enabled: true,
-            },
-          };
-          set({ templateId, theme: 'dracula', modules: updated });
-        } else if (templateId === 'cyberpunk-glitch') {
-          updated = {
-            ...updated,
-            headerBanner: {
-              enabled: true,
-              headerStyle: 'venom-capsule',
-              title: `${username} // CYBER_DEV`,
-              subtitle: '⚡ Autonomous Systems & Next-Gen Cloud Engineer',
-              typingLines: ['Compiling cyber systems 👾', 'Decentralized Architecture 🔐', 'High-Frequency Real-time Services ⚡'],
-              bannerColor: 'gradient',
-            },
-            beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
-            githubAnalytics: { ...updated.githubAnalytics, enabled: true, showActivityWave: true, showTrophies: true },
-          };
-          set({ templateId, theme: 'cyberpunk', modules: updated });
-        } else if (templateId === 'minimal-monochrome') {
-          updated = {
-            ...updated,
-            headerBanner: {
-              enabled: true,
-              headerStyle: 'minimal',
-              title: profileData?.profile?.name || username,
-              subtitle: profileData?.profile?.bio || 'Software Engineer',
-              typingLines: [],
-              bannerColor: 'black',
-            },
-            beastModeDashboard: { ...updated.beastModeDashboard, enabled: false },
-            githubAnalytics: { ...updated.githubAnalytics, showProfileDetailsCard: false, showTrophies: false },
-            techArsenal: { ...updated.techArsenal, enabled: false },
-          };
-          set({ templateId, theme: 'nord', modules: updated });
-        } else {
-          // Default fallthrough preset update
-          set({ templateId, modules: updated });
+        switch (templateId) {
+          case 'beast-mode-neon':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'venom-capsule',
+                title: displayName,
+                subtitle: 'Full-Stack & MERN Developer 🔥',
+                typingLines: ['Frontend Ninja ⚡ Backend Explorer 🔍', 'JavaScript Enthusiast 💻 DSA Master 🏆', 'Building Scalable Cloud Apps 🚀'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'rainbow-gradient' },
+              beastModeDashboard: { enabled: true, showProfileViews: true, showGrowthMetrics: true, showOpenToWork: true, showHireMe: true, showStreakCard: true, showWakaTime: true, email: updated.beastModeDashboard.email || '' },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+              techArsenal: { ...updated.techArsenal, enabled: true },
+            };
+            set({ templateId, theme: 'dracula', modules: updated });
+            break;
+
+          case 'cyberpunk-glitch':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'cyberpunk-glitch',
+                title: `${displayName} // CYBER_DEV`,
+                subtitle: '⚡ Autonomous Systems & Next-Gen Cloud Engineer',
+                typingLines: ['Compiling cyber systems 👾', 'Decentralized Architecture 🔐', 'High-Frequency Real-time Services ⚡'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'neon-laser-shimmer' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true, showStreakCard: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+              techArsenal: { ...updated.techArsenal, enabled: true },
+            };
+            set({ templateId, theme: 'cyberpunk', modules: updated });
+            break;
+
+          case 'dracula-dark':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'waving-capsule',
+                title: displayName,
+                subtitle: '🧛 Night Coder & Full-Stack Crafter',
+                typingLines: ['Embracing the dark theme 🌙', 'Writing pure clean code 💜', 'Coffee to Code Pipeline ☕'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'curved-wave' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'dracula', modules: updated });
+            break;
+
+          case 'nord-frost':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'handwritten-script',
+                title: displayName,
+                subtitle: '❄️ Nordic Frost Architect & Software Engineer',
+                typingLines: ['Icy precision architecture 🧊', 'Minimalist & performant ⚡', 'Clean interfaces, robust APIs 🛡️'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'curved-wave' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true, showProfileViews: true, showStreakCard: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: false, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: false },
+            };
+            set({ templateId, theme: 'nord', modules: updated });
+            break;
+
+          case 'minimal-monochrome':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'minimal',
+                title: displayName,
+                subtitle: profileData?.profile?.bio || 'Software Engineer & Designer',
+                typingLines: [],
+                bannerColor: 'black',
+              },
+              sectionDivider: { enabled: true, style: 'markdown-line' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: false },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: false, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: false, showNextAchievements: false },
+              techArsenal: { ...updated.techArsenal, enabled: false },
+            };
+            set({ templateId, theme: 'dark', modules: updated });
+            break;
+
+          case 'retro-terminal':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'terminal-prompt',
+                title: displayName,
+                subtitle: '$ root@dev: ~ /usr/bin/engineer --verbose',
+                typingLines: ['Initializing bash kernel... 📟', 'Mounting /dev/innovation 🚀', 'Compiling production assets 💾'],
+                bannerColor: 'black',
+              },
+              sectionDivider: { enabled: true, style: 'retro-dashed-terminal' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true, showStreakCard: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'matrix', modules: updated });
+            break;
+
+          case 'matrix-green':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'terminal-prompt',
+                title: displayName,
+                subtitle: 'Wake up, Neo... The Matrix has you. 🟩',
+                typingLines: ['Follow the white rabbit 🐇', 'Knock, knock, Neo 🚪', 'There is no spoon 🥄'],
+                bannerColor: 'black',
+              },
+              sectionDivider: { enabled: true, style: 'cyber-circuit' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'matrix', modules: updated });
+            break;
+
+          case 'synthwave-84':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'waving-capsule',
+                title: displayName,
+                subtitle: '🌴 Outrun Retro Wave & Web Architect',
+                typingLines: ['Cruising at 88mph down the neon grid 🏎️', '80s Synth Aesthetics 🌆', 'Full Stack Outrun Developer 🕹️'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'soundwave-eq' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'synthwave', modules: updated });
+            break;
+
+          case 'sunset-gradient':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'waving-capsule',
+                title: displayName,
+                subtitle: '🌅 Vibrant Sunset UI/UX & Full-Stack Developer',
+                typingLines: ['Crafting radiant interfaces 🌇', 'Warm gradients, bold ideas ✨', 'Modern Web Architect 🚀'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'rainbow-gradient' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'radical', modules: updated });
+            break;
+
+          case 'glassmorphism':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'handwritten-script',
+                title: displayName,
+                subtitle: '💎 Frosted Glass & Spatial UI Architect',
+                typingLines: ['Subtle blurs, translucent cards ✨', 'Modern Apple-like aesthetics 🍎', 'Full-Stack Performance ⚡'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'particle-sparkle' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'tokyonight', modules: updated });
+            break;
+
+          case 'tokyo-night':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'waving-capsule',
+                title: displayName,
+                subtitle: '🌃 Tokyo Midnight Cyber & Cloud Engineer',
+                typingLines: ['Shinjuku neon vibes 🏮', 'High-throughput microservices 🚅', 'Tokyo Night Palette 🌌'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'neon-laser-shimmer' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'tokyonight', modules: updated });
+            break;
+
+          case 'catppuccin-mocha':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'handwritten-script',
+                title: displayName,
+                subtitle: '☕ Cozy Catppuccin Developer & Thinker',
+                typingLines: ['Pastel lavender warmth 🌸', 'Crafting cozy software 🐱', 'TypeScript & Rust Enthusiast 🦀'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'curved-wave' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'catppuccin', modules: updated });
+            break;
+
+          case 'solarized-dark':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'terminal-prompt',
+                title: displayName,
+                subtitle: '☀️ Solarized Precision & System Programmer',
+                typingLines: ['Ethan Schoonover balanced colors 📐', 'UNIX philosophy follower 🐧', 'High reliability systems 🛡️'],
+                bannerColor: 'black',
+              },
+              sectionDivider: { enabled: true, style: 'retro-dashed-terminal' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'solarized', modules: updated });
+            break;
+
+          case 'clean-corporate':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'minimal',
+                title: displayName,
+                subtitle: '💼 Enterprise Solutions Architect & Lead Engineer',
+                typingLines: ['Scalable multi-cloud architectures ☁️', 'Enterprise reliability 99.999% 🏢', 'Team leader & mentor 👥'],
+                bannerColor: 'black',
+              },
+              sectionDivider: { enabled: true, style: 'markdown-line' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true, showStreakCard: false },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: false, showStatsCard: true, showActivityWave: true, showTrophies: false, showNextAchievements: false },
+            };
+            set({ templateId, theme: 'github_dark', modules: updated });
+            break;
+
+          case 'acid-tech':
+            updated = {
+              ...updated,
+              headerBanner: {
+                enabled: true,
+                headerStyle: 'cyberpunk-glitch',
+                title: `${displayName} // ACID_TECH`,
+                subtitle: '⚡ High-Voltage Lime & Radical Cyberpunk',
+                typingLines: ['Overclocked performance ⚡', 'Electric lime & purple matrix 🔋', 'Limitless experimentation 🧪'],
+                bannerColor: 'gradient',
+              },
+              sectionDivider: { enabled: true, style: 'neon-laser-shimmer' },
+              beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+              githubAnalytics: { enabled: true, showProfileDetailsCard: true, showReposPerLanguage: true, showMostCommitLanguage: true, showStatsCard: true, showActivityWave: true, showTrophies: true, showNextAchievements: true },
+            };
+            set({ templateId, theme: 'radical', modules: updated });
+            break;
+
+          default:
+            set({ templateId, modules: updated });
+            break;
         }
 
         get().regenerateMarkdown(username, profileData);
@@ -255,6 +456,13 @@ export const useEditorStore = create<EditorState>()(
         };
 
         set({ modules: updatedModules });
+        get().regenerateMarkdown(username, profileData);
+      },
+
+      importFromExistingReadme: (parsed, username, profileData) => {
+        const state = get();
+        const updated = applyParsedReadmeToModules(state.modules, parsed);
+        set({ modules: updated });
         get().regenerateMarkdown(username, profileData);
       },
 

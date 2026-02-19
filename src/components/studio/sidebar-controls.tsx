@@ -7,6 +7,7 @@ import { CanvasPainter } from '@/components/studio/canvas-painter';
 import { TrophyCustomizer } from '@/components/studio/trophy-customizer';
 import { ProjectReadmeConfigurator } from '@/components/studio/project-readme-configurator';
 import { defaultProjectConfig, type ProjectReadmeConfig } from '@/lib/project-readme-engine';
+import { BlockBuilder } from '@/components/studio/block-builder';
 import type { ModuleConfig, ThemeId, TemplateId } from '@/lib/template-engine';
 import {
   FiZap,
@@ -22,6 +23,7 @@ import {
   FiAward,
   FiPlay,
   FiBox,
+  FiLayers,
 } from 'react-icons/fi';
 
 interface SidebarControlsProps {
@@ -39,6 +41,7 @@ interface SidebarControlsProps {
 
 type TabKey =
   | 'templates'
+  | 'blocks'
   | 'project'
   | 'canvas'
   | 'header'
@@ -86,6 +89,7 @@ export function SidebarControls({
 
   const navTabs: { id: TabKey; label: string; icon: React.ReactNode }[] = [
     { id: 'templates', label: '15 Presets', icon: <FiZap size={14} className="text-amber-400" /> },
+    { id: 'blocks', label: 'Block Builder', icon: <FiLayers size={14} className="text-cyan-400" /> },
     { id: 'project', label: 'Repo Mode', icon: <FiBox size={14} className="text-blue-400" /> },
     { id: 'canvas', label: 'Canvas Painter', icon: <FiAward size={14} className="text-emerald-400" /> },
     { id: 'header', label: 'Header', icon: <FiSliders size={14} /> },
@@ -159,7 +163,14 @@ export function SidebarControls({
           </div>
         )}
 
-        {/* ── TAB 1A: PROJECT REPO MODE (PHASE 8) ── */}
+        {/* ── TAB 1A: SECTION ORDER & BLOCK BUILDER ── */}
+        {activeTab === 'blocks' && (
+          <div className="space-y-4">
+            <BlockBuilder modules={modules} onUpdateModule={onUpdateModule} />
+          </div>
+        )}
+
+        {/* ── TAB 1B: PROJECT REPO MODE (PHASE 8) ── */}
         {activeTab === 'project' && (
           <div className="space-y-4">
             <ProjectReadmeConfigurator
