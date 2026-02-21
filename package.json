@@ -1,6 +1,10 @@
 {
-  "name": "synthetixgit-temp",
-  "version": "0.1.0",
+  "name": "synthetixgit",
+  "version": "1.0.0",
+  "description": "The All-in-One Developer Profile & Repository README Studio",
+  "bin": {
+    "synthetix-cli": "./bin/synthetix-cli.js"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
