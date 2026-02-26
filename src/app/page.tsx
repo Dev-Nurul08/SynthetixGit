@@ -28,6 +28,7 @@ import {
 import toast from 'react-hot-toast';
 import { ALL_15_TEMPLATES } from '@/lib/template-engine';
 import { useProfileStore } from '@/stores/profile-store';
+import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 
 type StudioMode = 'profile' | 'canvas' | 'repo' | 'arcade' | 'widgets';
 
@@ -461,6 +462,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Guided 5-Step Profile Builder Wizard Section */}
+      <section id="wizard" className="border-t border-white/10 bg-[#0c1219] py-16 px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl space-y-8">
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 text-xs font-bold text-cyan-200">
+              <FiSliders size={13} />
+              Interactive Step-by-Step Profile Builder
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">
+              Scan, Customize & Build Your Dream GitHub README
+            </h2>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Enter your GitHub username to automatically scan your profile, import existing README details, select blocks (LeetCode, Socials, Stats, Snake), pick a theme, and 1-click deploy.
+            </p>
+          </div>
+
+          <OnboardingWizard />
+        </div>
+      </section>
+
       <section id="features" className="border-y border-white/10 bg-[#0f151d]">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -681,35 +702,105 @@ function ReadmePreviewPanel() {
 }
 
 function ContributionGraphPreview() {
-  return (
-    <div className="mt-6 overflow-hidden rounded-md border border-white/10 bg-[#111820] p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-bold text-slate-300">52 x 7 contribution canvas</span>
-        <span className="rounded bg-emerald-300/10 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
-          Script export
-        </span>
-      </div>
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[620px] grid-flow-col grid-rows-7 gap-1">
-          {Array.from({ length: 52 }).map((_, column) =>
-            Array.from({ length: 7 }).map((__, row) => {
-              const active =
-                (column > 5 && column < 16 && (row === 1 || row === 5 || column === 6 || column === 15)) ||
-                (column > 22 && column < 33 && (row === 0 || row === 3 || row === 6)) ||
-                (column > 38 && column < 48 && row === Math.abs((column % 7) - 3));
+  const [previewGrid, setPreviewGrid] = useState<number[][]>(() => {
+    const initial = Array.from({ length: 52 }, () => Array(7).fill(0));
+    // Default decorative pattern: "SYNTH"
+    for (let c = 0; c < 52; c++) {
+      for (let r = 0; r < 7; r++) {
+        if (
+          (c > 4 && c < 12 && (r === 1 || r === 3 || r === 5 || (r === 2 && c === 5) || (r === 4 && c === 11))) ||
+          (c > 14 && c < 22 && (r === 1 || c === 18)) ||
+          (c > 24 && c < 32 && (r === 1 || r === 3 || (c === 25 || c === 31))) ||
+          (c > 34 && c < 42 && (r === 1 || r === 5 || c === 38)) ||
+          (c > 44 && c < 50 && (r === 1 || r === 3 || r === 5 || c === 47))
+        ) {
+          initial[c][r] = 4;
+        }
+      }
+    }
+    return initial;
+  });
 
-              return (
-                <span
-                  key={`${column}-${row}`}
-                  className={`h-2.5 w-2.5 rounded-[2px] ${
-                    active ? 'bg-emerald-300 shadow-sm shadow-emerald-300/30' : 'bg-white/[0.08]'
-                  }`}
-                />
-              );
-            })
-          )}
+  const levelColors = ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const toggleCell = (col: number, row: number) => {
+    setPreviewGrid((prev) => {
+      const next = prev.map((c) => [...c]);
+      next[col][row] = next[col][row] === 4 ? 0 : 4;
+      return next;
+    });
+  };
+
+  const clearCanvas = () => {
+    setPreviewGrid(Array.from({ length: 52 }, () => Array(7).fill(0)));
+  };
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] p-4 shadow-xl">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-bold text-slate-200">Interactive 52 x 7 Contribution Canvas</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={clearCanvas}
+            className="text-[10px] font-bold text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/[0.04] border border-white/10 transition-colors"
+          >
+            Clear
+          </button>
+          <Link
+            href="/studio?mode=canvas"
+            className="rounded bg-emerald-400/15 border border-emerald-400/30 px-2 py-0.5 text-[11px] font-bold text-emerald-300 hover:bg-emerald-400/25 transition-colors"
+          >
+            Open Full Studio ↗
+          </Link>
         </div>
       </div>
+
+      <div className="overflow-x-auto pb-1">
+        <div className="flex min-w-[580px] text-[9px] font-mono text-slate-500 mb-1 pl-4 justify-between pr-1">
+          {months.map((m) => (
+            <span key={m}>{m}</span>
+          ))}
+        </div>
+
+        <div className="flex min-w-[580px] gap-1.5">
+          <div className="grid grid-rows-7 gap-1 text-[8px] font-mono text-slate-600 shrink-0 select-none">
+            <span>S</span>
+            <span>M</span>
+            <span>T</span>
+            <span>W</span>
+            <span>T</span>
+            <span>F</span>
+            <span>S</span>
+          </div>
+
+          <div className="inline-grid grid-rows-7 grid-flow-col gap-1 flex-1">
+            {Array.from({ length: 7 }).map((_, r) =>
+              Array.from({ length: 52 }).map((__, c) => {
+                const level = previewGrid[c]?.[r] || 0;
+                return (
+                  <button
+                    key={`${c}-${r}`}
+                    type="button"
+                    onClick={() => toggleCell(c, r)}
+                    className="h-2.5 w-2.5 rounded-[2px] transition-transform hover:scale-150 cursor-pointer"
+                    style={{ backgroundColor: levelColors[level] }}
+                    title={`Week ${c + 1}, Day ${r + 1} (Click to toggle)`}
+                  />
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-[10px] text-slate-500 text-center font-mono">
+        💡 Click on any cell above to paint custom pixel art directly.
+      </p>
     </div>
   );
 }
+
