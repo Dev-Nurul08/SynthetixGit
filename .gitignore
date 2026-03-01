@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -13,18 +13,25 @@
 # testing
 /coverage
 
-# next.js
+# next.js & server builds
 /.next/
 /out/
+build/
+dist/
+server/dist/
 
-# production
-/build
+# editor & workspace files
+*.code-workspace
+.vscode/
+.idea/
 
-# misc
+# os & misc
 .DS_Store
+Thumbs.db
 *.pem
 
-# debug
+# debug & logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -34,7 +41,7 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
+# vercel & deployments
 .vercel
 
 # local agent specs (not needed in production)
@@ -43,3 +50,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
