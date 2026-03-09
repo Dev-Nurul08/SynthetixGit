@@ -1,13 +1,72 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg-canvas: #05070a;
+  --color-bg-primary: #0a0d12;
+  --color-bg-secondary: #0f141c;
+  --color-bg-tertiary: #151c27;
+  --color-bg-elevated: #1a2332;
+  --color-bg-hover: #1f2a3b;
+
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-primary: rgba(255, 255, 255, 0.07);
+  --color-border-secondary: rgba(255, 255, 255, 0.12);
+  --color-border-tertiary: rgba(255, 255, 255, 0.18);
+
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-tertiary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-brand-50: #ecfeff;
+  --color-brand-100: #cffafe;
+  --color-brand-200: #a5f3fc;
+  --color-brand-300: #67e8f9;
+  --color-brand-400: #22d3ee;
+  --color-brand-500: #06b6d4;
+  --color-brand-600: #0891b2;
+  --color-brand-700: #0e7490;
+
+  --color-accent-emerald: #34d399;
+  --color-accent-emerald-soft: rgba(52, 211, 153, 0.12);
+  --color-accent-emerald-border: rgba(52, 211, 153, 0.24);
+  --color-accent-amber: #fbbf24;
+  --color-accent-amber-soft: rgba(251, 191, 36, 0.12);
+  --color-accent-amber-border: rgba(251, 191, 36, 0.24);
+  --color-accent-rose: #fb7185;
+  --color-accent-rose-soft: rgba(251, 113, 133, 0.12);
+  --color-accent-rose-border: rgba(251, 113, 133, 0.24);
+  --color-accent-violet: #a78bfa;
+  --color-accent-violet-soft: rgba(167, 139, 250, 0.12);
+  --color-accent-violet-border: rgba(167, 139, 250, 0.24);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-glow-brand: 0 0 40px -12px rgba(34, 211, 238, 0.35);
+  --shadow-card: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
+  --shadow-card-lg: 0 8px 48px -12px rgba(0, 0, 0, 0.7);
+
+  --radius-sm: 0.4rem;
+  --radius-md: 0.6rem;
+  --radius-lg: 0.8rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-base: 1rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+  --spacing-3xl: 3rem;
+  --spacing-4xl: 4rem;
+}
+
 :root {
   color-scheme: dark;
-  --bg-page: #0b0f14;
-  --bg-card: #101720;
-  --bg-card-deep: #0d1117;
-  --border-primary: rgba(255, 255, 255, 0.1);
-  --text-primary: #f8fafc;
-  --text-muted: #94a3b8;
+  --ring-color: rgba(34, 211, 238, 0.45);
 }
 
 * {
@@ -16,22 +75,51 @@
 
 html {
   min-height: 100%;
-  background: var(--bg-page);
+  background: var(--color-bg-canvas);
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    var(--bg-page);
-  background-size: 56px 56px;
-  color: var(--text-primary);
-  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.04), transparent);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 30%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 30%, black 40%, transparent 100%);
+}
+
+#__next {
+  position: relative;
+  z-index: 1;
 }
 
 button,
@@ -39,6 +127,7 @@ input,
 textarea,
 select {
   font: inherit;
+  color: inherit;
 }
 
 button,
@@ -46,13 +135,37 @@ a {
   touch-action: manipulation;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid #67e8f9;
-  outline-offset: 2px;
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring-color);
+  outline-offset: 0;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #ecfeff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.45);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .no-scrollbar {
@@ -63,58 +176,44 @@ select:focus-visible {
   display: none;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.55);
-}
-
 .github-readme-render {
-  color: #c9d1d9;
+  color: var(--color-text-secondary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.75;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .github-readme-render h1,
 .github-readme-render h2,
-.github-readme-render h3 {
-  color: #f0f6fc;
-  line-height: 1.25;
+.github-readme-render h3,
+.github-readme-render h4,
+.github-readme-render h5,
+.github-readme-render h6 {
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  font-weight: 700;
 }
 
 .github-readme-render h1 {
-  margin: 24px 0 16px;
-  padding-bottom: 0.35em;
-  border-bottom: 1px solid #30363d;
+  margin: 0 0 16px;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--color-border-secondary);
   font-size: 2em;
   font-weight: 800;
 }
 
 .github-readme-render h2 {
-  margin: 24px 0 16px;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid #21262d;
+  margin: 28px 0 14px;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--color-border-primary);
   font-size: 1.5em;
   font-weight: 750;
 }
 
 .github-readme-render h3 {
-  margin: 20px 0 12px;
+  margin: 22px 0 10px;
   font-size: 1.25em;
   font-weight: 700;
 }
@@ -130,7 +229,7 @@ select:focus-visible {
 
 .github-readme-render ul,
 .github-readme-render ol {
-  padding-left: 2em;
+  padding-left: 1.75em;
 }
 
 .github-readme-render li {
@@ -138,43 +237,46 @@ select:focus-visible {
 }
 
 .github-readme-render a {
-  color: #58a6ff;
+  color: var(--color-brand-400);
   font-weight: 500;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .github-readme-render a:hover {
+  color: var(--color-brand-300);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .github-readme-render blockquote {
   margin-left: 0;
-  padding: 8px 16px;
-  border-left: 4px solid #58a6ff;
-  border-radius: 0 8px 8px 0;
-  background: rgba(88, 166, 255, 0.08);
-  color: #8b949e;
+  padding: 12px 18px;
+  border-left: 4px solid var(--color-brand-500);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: rgba(6, 182, 212, 0.06);
+  color: var(--color-text-tertiary);
 }
 
 .github-readme-render code {
   margin: 0;
-  padding: 0.2em 0.4em;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  background-color: #161b22;
-  color: #f0f6fc;
-  font-family: var(--font-jetbrains), "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 85%;
+  padding: 0.2em 0.45em;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 84%;
 }
 
 .github-readme-render pre {
   overflow: auto;
-  padding: 16px;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  background-color: #0d1117;
+  padding: 18px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-canvas);
   font-size: 90%;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .github-readme-render pre code {
@@ -188,6 +290,7 @@ select:focus-visible {
   max-width: 100%;
   height: auto;
   margin: 4px 0;
+  border-radius: var(--radius-sm);
 }
 
 .github-readme-render table {
@@ -201,21 +304,74 @@ select:focus-visible {
 
 .github-readme-render th,
 .github-readme-render td {
-  padding: 6px 13px;
-  border: 1px solid #30363d;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-secondary);
 }
 
-.github-readme-render tr:nth-child(2n) {
-  background-color: #161b22;
+.github-readme-render th {
+  background: var(--color-bg-tertiary);
+  font-weight: 700;
+}
+
+.github-readme-render tr:nth-child(2n) td {
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .github-readme-render hr {
   height: 1px;
-  margin: 24px 0;
+  margin: 26px 0;
   border: 0;
-  background-color: #21262d;
+  background: var(--color-border-primary);
 }
 
 .github-readme-render [align="center"] {
   text-align: center;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.12); }
+  50% { box-shadow: 0 0 20px 4px rgba(34, 211, 238, 0.08); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out both;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
 }
