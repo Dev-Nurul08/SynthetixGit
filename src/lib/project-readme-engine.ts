@@ -24,10 +24,10 @@ export interface ProjectReadmeConfig {
 export const defaultProjectConfig: ProjectReadmeConfig = {
   projectName: 'SynthetixGit',
   tagline: 'The All-in-One Developer Portfolio & Project README Studio',
-  repoUrl: 'https://github.com/Dev-Nurul08/SynthetixGit',
+  repoUrl: 'https://github.com/yourusername/yourrepo',
   demoUrl: 'https://synthetixgit.vercel.app',
-  authorName: 'Nurul Shaikh',
-  authorGithub: 'Dev-Nurul08',
+  authorName: 'Your Name',
+  authorGithub: 'yourusername',
   license: 'MIT',
   templateType: 'fullstack',
   features: [

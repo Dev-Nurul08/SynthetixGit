@@ -23,16 +23,19 @@ interface CanvasPainterProps {
   username?: string;
 }
 
-export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) {
+export function CanvasPainter({ username = '' }: CanvasPainterProps) {
   const [grid, setGrid] = useState<number[][]>(() =>
     Array.from({ length: 52 }, () => Array(7).fill(0))
   );
   const [selectedLevel, setSelectedLevel] = useState<number>(4);
-  const [customText, setCustomText] = useState<string>('NURUL');
+  const [customText, setCustomText] = useState<string>(() => {
+    if (!username) return '';
+    const alphanumeric = username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+    return alphanumeric.charAt(0).toUpperCase() + alphanumeric.slice(1);
+  });
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [copiedScript, setCopiedScript] = useState<boolean>(false);
 
-  // Count active cells and estimated commits
   const totalPixels = grid.reduce((acc, col) => acc + col.filter((l) => l > 0).length, 0);
   const commitMultiplier: Record<number, number> = { 0: 0, 1: 2, 2: 5, 3: 10, 4: 20 };
   const estimatedCommits = grid.reduce(
@@ -112,7 +115,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
   const getScriptContent = () => {
     return generateBashPainterScript({
       username,
-      userEmail: 'shaikhnurul8200@gmail.com',
+      userEmail: `${username}@users.noreply.github.com`,
       repoName: 'github-contribution-art',
       grid,
     });
@@ -142,21 +145,20 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
 
   return (
     <div
-      className="p-5 rounded-3xl bg-slate-900/90 border-2 border-slate-800 space-y-5 shadow-2xl select-none"
+      className="p-5 rounded-3xl bg-bg-primary/90 border-2 border-border-secondary space-y-5 shadow-2xl select-none"
       onMouseDown={() => setIsMouseDown(true)}
       onMouseUp={() => setIsMouseDown(false)}
     >
-      {/* Top Header & Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-secondary pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-3 h-3 rounded-full bg-accent-emerald animate-ping" />
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <FiZap className="text-emerald-400" size={16} />
+              <FiZap className="text-accent-emerald" size={16} />
               <span>52x7 GitHub Contribution Graph Art Studio</span>
             </h3>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-text-tertiary mt-1">
             Draw custom pixel art, write names, and generate automated bash scripts to paint on your GitHub calendar.
           </p>
         </div>
@@ -165,16 +167,16 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
           <button
             type="button"
             onClick={handleCopyScript}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-slate-700"
+            className="px-3.5 py-2 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-text-primary font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-border-secondary"
           >
-            {copiedScript ? <FiCheck size={14} className="text-emerald-400" /> : <FiCopy size={14} />}
+            {copiedScript ? <FiCheck size={14} className="text-accent-emerald" /> : <FiCopy size={14} />}
             <span>{copiedScript ? 'Copied!' : 'Copy Script'}</span>
           </button>
 
           <button
             type="button"
             onClick={handleExportScript}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/25"
+            className="px-4 py-2 rounded-xl bg-accent-emerald hover:bg-accent-emerald text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-accent-emerald/25"
           >
             <FiDownload size={14} />
             <span>Download paint-graph.sh</span>
@@ -182,37 +184,35 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
         </div>
       </div>
 
-      {/* Stats Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Weeks</span>
-          <span className="text-sm font-mono font-bold text-slate-200">52 Weeks</span>
+        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
+          <span className="text-[10px] uppercase font-bold text-text-muted block">Total Weeks</span>
+          <span className="text-sm font-mono font-bold text-text-primary">52 Weeks</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Painted Pixels</span>
-          <span className="text-sm font-mono font-bold text-emerald-400">{totalPixels} / 364</span>
+        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
+          <span className="text-[10px] uppercase font-bold text-text-muted block">Painted Pixels</span>
+          <span className="text-sm font-mono font-bold text-accent-emerald">{totalPixels} / 364</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Est. Commits</span>
-          <span className="text-sm font-mono font-bold text-blue-400">~{estimatedCommits} Commits</span>
+        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
+          <span className="text-[10px] uppercase font-bold text-text-muted block">Est. Commits</span>
+          <span className="text-sm font-mono font-bold text-brand-400">~{estimatedCommits} Commits</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Target Author</span>
+        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
+          <span className="text-[10px] uppercase font-bold text-text-muted block">Target Author</span>
           <span className="text-sm font-mono font-bold text-amber-300 truncate block">@{username}</span>
         </div>
       </div>
 
-      {/* Text-to-Pixel Generator & Quick Words */}
-      <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+      <div className="p-3.5 rounded-2xl bg-bg-canvas border border-border-primary space-y-2.5">
         <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 w-full">
-            <FiType size={15} className="text-blue-400 shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg-primary border border-border-primary w-full">
+            <FiType size={15} className="text-brand-400 shrink-0" />
             <input
               type="text"
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleApplyText()}
-              placeholder="Type word (e.g. NURUL, DEV, HI, CODE)..."
+              placeholder="Type word (e.g. HELLO, DEV, CODE, OSS)..."
               className="bg-transparent text-xs font-bold text-white outline-none w-full uppercase tracking-wider"
               maxLength={8}
             />
@@ -221,16 +221,15 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
           <button
             type="button"
             onClick={() => handleApplyText()}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-md shadow-blue-600/25"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-950 text-xs font-bold transition-all cursor-pointer shrink-0 shadow-md shadow-brand-500/25"
           >
             Auto-Paint Word
           </button>
         </div>
 
-        {/* Quick word pills */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-bold text-slate-500">Quick Words:</span>
-          {['NURUL', 'DEV', 'CODE', 'HI', 'GIT', 'PRO'].map((word) => (
+          <span className="text-[11px] font-bold text-text-muted">Quick Words:</span>
+          {['HELLO', 'CODE', 'DEV', 'GIT', 'PRO', 'OSS'].map((word) => (
             <button
               key={word}
               type="button"
@@ -238,7 +237,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
                 setCustomText(word);
                 handleApplyText(word);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-[11px] font-bold transition-all cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-white border border-border-primary text-[11px] font-bold transition-all cursor-pointer"
             >
               {word}
             </button>
@@ -246,8 +245,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
         </div>
       </div>
 
-      {/* Interactive 52x7 Contribution Canvas Grid */}
-      <div className="overflow-x-auto p-4 rounded-2xl bg-slate-950 border border-slate-800">
+      <div className="overflow-x-auto p-4 rounded-2xl bg-bg-canvas border border-border-primary">
         <div className="inline-grid grid-rows-7 grid-flow-col gap-1.5 min-w-[780px]">
           {Array.from({ length: 7 }).map((_, r) =>
             Array.from({ length: 52 }).map((_, c) => {
@@ -267,11 +265,9 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
         </div>
       </div>
 
-      {/* Palette, Presets & Tools */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
-        {/* Color Palette Intensity */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-400 mr-1">Green Intensity:</span>
+          <span className="text-xs font-bold text-text-tertiary mr-1">Green Intensity:</span>
           {LEVEL_COLORS.map((col, idx) => (
             <button
               key={idx}
@@ -279,8 +275,8 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
               onClick={() => setSelectedLevel(idx)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer text-xs font-bold ${
                 selectedLevel === idx
-                  ? 'border-white bg-slate-800 text-white ring-2 ring-blue-500'
-                  : 'border-slate-800 bg-slate-950 text-slate-400'
+                  ? 'border-white bg-bg-secondary text-white ring-2 ring-brand-400'
+                  : 'border-border-primary bg-bg-canvas text-text-tertiary'
               }`}
             >
               <span className="w-3 h-3 rounded-xs shrink-0" style={{ backgroundColor: col }} />
@@ -289,12 +285,11 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
           ))}
         </div>
 
-        {/* Preset Stamps & Clear Action */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => handlePresetStamp('heart')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-pink-400 border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-pink-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
           >
             <FiHeart size={14} className="text-pink-400" />
             <span>Heart</span>
@@ -302,15 +297,15 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
           <button
             type="button"
             onClick={() => handlePresetStamp('invader')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-accent-emerald border border-border-primary text-xs font-bold transition-all cursor-pointer"
           >
-            <FiSmile size={14} className="text-emerald-400" />
+            <FiSmile size={14} className="text-accent-emerald" />
             <span>Invader</span>
           </button>
           <button
             type="button"
             onClick={() => handlePresetStamp('snake')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-cyan-400 border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-cyan-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
           >
             <span className="text-sm">🐍</span>
             <span>Wave</span>
@@ -318,7 +313,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
           <button
             type="button"
             onClick={handleClear}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-red-950/40 text-text-tertiary hover:text-red-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
           >
             <FiTrash2 size={14} />
             <span>Clear</span>
@@ -326,14 +321,13 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
         </div>
       </div>
 
-      {/* Instructions callout */}
-      <div className="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-500/20 flex items-start gap-2.5 text-xs text-blue-200">
-        <FiInfo size={16} className="text-blue-400 shrink-0 mt-0.5" />
+      <div className="p-3.5 rounded-2xl bg-brand-950/30 border border-brand-400/20 flex items-start gap-2.5 text-xs text-brand-200">
+        <FiInfo size={16} className="text-brand-400 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <span className="font-bold text-white block">How to Paint on Your Live GitHub Contribution Calendar:</span>
-          <p className="text-slate-300 text-[11px] leading-relaxed">
+          <p className="text-text-secondary text-[11px] leading-relaxed">
             1. Click <strong>Download paint-graph.sh</strong> above. <br />
-            2. Open a terminal and run <code className="text-emerald-300 bg-black/40 px-1.5 py-0.5 rounded">bash paint-graph.sh</code>. <br />
+            2. Open a terminal and run <code className="text-accent-emerald bg-black/40 px-1.5 py-0.5 rounded">bash paint-graph.sh</code>. <br />
             3. Push the generated repository to your GitHub account to light up your 52-week contribution graph with your custom pixel art!
           </p>
         </div>

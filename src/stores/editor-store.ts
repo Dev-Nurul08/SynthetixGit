@@ -68,9 +68,10 @@ export const useEditorStore = create<EditorState>()(
               title: profileData?.profile?.name || username,
               subtitle: 'Full-Stack & MERN Developer',
               typingLines: [
-                'Diploma in Computer Student @ VidhyaDeep University 🎓',
-                'Frontend Ninja ⚡ Backend Explorer 🔍',
-                'JavaScript Enthusiast 💻 DSA Master 🏆',
+                'Building modern web applications 🚀',
+                'Open Source Contributor 💻',
+                'Full Stack Engineer ⚡',
+                'Learning in public 📚',
               ],
               bannerColor: 'gradient',
             },
@@ -82,7 +83,7 @@ export const useEditorStore = create<EditorState>()(
               showHireMe: true,
               showStreakCard: true,
               showWakaTime: true,
-              email: 'shaikhnurul8200@gmail.com',
+              email: '',
             },
             githubAnalytics: {
               enabled: true,
@@ -115,7 +116,7 @@ export const useEditorStore = create<EditorState>()(
               typingLines: ['Compiling cyber systems 👾', 'Decentralized Architecture 🔐', 'High-Frequency Real-time Services ⚡'],
               bannerColor: 'gradient',
             },
-            beastModeDashboard: { ...updated.beastModeDashboard, enabled: true },
+            beastModeDashboard: { ...updated.beastModeDashboard, enabled: true, email: '' },
             githubAnalytics: { ...updated.githubAnalytics, enabled: true, showActivityWave: true, showTrophies: true },
           };
           set({ templateId, theme: 'cyberpunk', modules: updated });
