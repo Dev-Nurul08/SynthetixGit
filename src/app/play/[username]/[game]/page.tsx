@@ -30,6 +30,7 @@ export default function PlayGamePage() {
   // Game Loop State Refs
   const gameStateRef = useRef<any>({});
   const animationFrameId = useRef<number | null>(null);
+  const isPausedRef = useRef<boolean>(false);
   const gameOverCtaShownRef = useRef<boolean>(false);
   const toastCtaShownRef = useRef<boolean>(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,6 +207,15 @@ export default function PlayGamePage() {
     setShowCtaModal(true);
   }, [gameOver]);
 
+  // Sync isPaused ref when state changes
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  const togglePause = () => {
+    setIsPaused((prev) => !prev);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -216,6 +226,7 @@ export default function PlayGamePage() {
     setScore(0);
     setGameOver(false);
     setIsPaused(false);
+    isPausedRef.current = false;
 
     // Initialize Game Engine based on activeGame
     if (activeGame === 'snake') {
@@ -260,6 +271,12 @@ export default function PlayGamePage() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        isPausedRef.current = !isPausedRef.current;
+        setIsPaused(isPausedRef.current);
+        return;
+      }
+      if (isPausedRef.current) return;
       if (e.key === 'ArrowUp' || e.key === 'w') { if (dir.y === 0) nextDir = { x: 0, y: -1 }; }
       if (e.key === 'ArrowDown' || e.key === 's') { if (dir.y === 0) nextDir = { x: 0, y: 1 }; }
       if (e.key === 'ArrowLeft' || e.key === 'a') { if (dir.x === 0) nextDir = { x: -1, y: 0 }; }
@@ -268,6 +285,22 @@ export default function PlayGamePage() {
     window.addEventListener('keydown', handleKeyDown);
 
     function loop(time: number) {
+      // Skip update when paused — keep requesting frames to re-check
+      if (isPausedRef.current) {
+        // Draw pause overlay
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22d3ee';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏸ PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('Press P or click Resume', canvas.width / 2, canvas.height / 2 + 22);
+        animationFrameId.current = requestAnimationFrame(loop);
+        return;
+      }
+
       if (!lastTime) lastTime = time;
       const delta = time - lastTime;
 
@@ -377,7 +410,29 @@ export default function PlayGamePage() {
     };
     canvas.addEventListener('mousemove', handleMouseMove);
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        isPausedRef.current = !isPausedRef.current;
+        setIsPaused(isPausedRef.current);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     function loop() {
+      if (isPausedRef.current) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22d3ee';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏸ PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('Press P or click Resume', canvas.width / 2, canvas.height / 2 + 22);
+        animationFrameId.current = requestAnimationFrame(loop);
+        return;
+      }
+
       ctx.fillStyle = '#080b13';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -445,6 +500,12 @@ export default function PlayGamePage() {
     }
 
     animationFrameId.current = requestAnimationFrame(loop);
+    gameStateRef.current = {
+      cleanup: () => {
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('keydown', handleKeyDown);
+      },
+    };
   }
 
   // ── 3. PAC-MAN ENGINE ──
@@ -463,7 +524,29 @@ export default function PlayGamePage() {
       dots.push({ x, y: 180, active: true });
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        isPausedRef.current = !isPausedRef.current;
+        setIsPaused(isPausedRef.current);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     function loop() {
+      if (isPausedRef.current) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22d3ee';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏸ PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('Press P or click Resume', canvas.width / 2, canvas.height / 2 + 22);
+        animationFrameId.current = requestAnimationFrame(loop);
+        return;
+      }
+
       ctx.fillStyle = '#080b13';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -506,6 +589,11 @@ export default function PlayGamePage() {
     }
 
     animationFrameId.current = requestAnimationFrame(loop);
+    gameStateRef.current = {
+      cleanup: () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      },
+    };
   }
 
   return (
@@ -537,6 +625,20 @@ export default function PlayGamePage() {
               {g.replace('-', ' ')}
             </button>
           ))}
+          {!gameOver && (
+            <button
+              type="button"
+              onClick={togglePause}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                isPaused
+                  ? 'bg-accent-emerald text-slate-950'
+                  : 'bg-bg-primary text-text-muted hover:text-text-secondary border border-border-primary'
+              }`}
+            >
+              {isPaused ? <FiPlay size={12} /> : <FiPause size={12} />}
+              {isPaused ? 'Resume' : 'Pause'}
+            </button>
+          )}
         </div>
       </header>
 
