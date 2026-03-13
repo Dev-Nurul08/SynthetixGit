@@ -2,14 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FiArrowLeft, FiPlay, FiPause, FiRotateCcw, FiVolume2, FiVolumeX, FiStar } from 'react-icons/fi';
+import { Toaster, toast } from 'react-hot-toast';
+import { FiArrowLeft, FiPlay, FiPause, FiRotateCcw, FiVolume2, FiVolumeX, FiStar, FiX } from 'react-icons/fi';
 
 type GameType = 'snake' | 'brick-breaker' | 'breakout' | 'pacman';
+
+const CTA_DISMISSED_KEY = 'synthetixgit-game-cta-dismissed';
+const LAST_USER_KEY = 'synthetixgit:last-username';
+const VISITOR_BANNER_KEY = 'synthetixgit-visitor-banner-dismissed';
 
 export default function PlayGamePage() {
   const params = useParams();
   const router = useRouter();
-  const username = (params?.username as string) || 'Dev-Nurul08';
+  const username = (params?.username as string) || 'octocat';
   const rawGame = (params?.game as string) || 'snake';
   const gameType: GameType = rawGame === 'breakout' ? 'brick-breaker' : (rawGame as GameType);
 
@@ -19,10 +24,187 @@ export default function PlayGamePage() {
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [activeGame, setActiveGame] = useState<GameType>(gameType);
+  const [showCtaModal, setShowCtaModal] = useState<boolean>(false);
+  const [showVisitorBanner, setShowVisitorBanner] = useState<boolean>(false);
 
   // Game Loop State Refs
   const gameStateRef = useRef<any>({});
   const animationFrameId = useRef<number | null>(null);
+  const gameOverCtaShownRef = useRef<boolean>(false);
+  const toastCtaShownRef = useRef<boolean>(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function getLocalStorageLastUser(): string {
+    if (typeof window === 'undefined') return '';
+    try {
+      return window.localStorage.getItem(LAST_USER_KEY) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  function isCtaDismissed(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem(CTA_DISMISSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markCtaDismissed() {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(CTA_DISMISSED_KEY, '1');
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function handleCtaPrimary() {
+    const lastUser = getLocalStorageLastUser();
+    if (lastUser) {
+      router.push(`/studio?user=${lastUser}`);
+    } else {
+      router.push('/');
+    }
+  }
+
+  function dismissCtaModal() {
+    setShowCtaModal(false);
+    markCtaDismissed();
+  }
+
+  function showToastCta() {
+    if (isCtaDismissed()) return;
+    if (toastCtaShownRef.current) return;
+    toastCtaShownRef.current = true;
+
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          } transition-all duration-300 max-w-sm w-full bg-bg-primary border border-border-primary rounded-2xl shadow-2xl p-4 relative`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              markCtaDismissed();
+              toast.dismiss(t.id);
+            }}
+            className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-bg-secondary text-text-muted hover:text-white transition-colors"
+            aria-label="Dismiss"
+          >
+            <FiX size={14} />
+          </button>
+          <div className="pr-6">
+            <div className="flex items-start gap-2.5 mb-1.5">
+              <span className="text-lg leading-none">🎮</span>
+              <h4 className="text-sm font-bold text-text-primary leading-snug">
+                Love this game? 🚀 Generate YOUR GitHub README with playable arcade games
+              </h4>
+            </div>
+            <p className="text-xs text-text-muted mb-3 pl-7">
+              Create a profile README just like @{username}&apos;s in under 2 minutes.
+            </p>
+            <div className="flex items-center gap-2 pl-7">
+              <button
+                type="button"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  handleCtaPrimary();
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <span>✨</span>
+                <span>Generate My README</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  markCtaDismissed();
+                  toast.dismiss(t.id);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-transparent hover:bg-bg-secondary text-text-muted hover:text-text-secondary font-bold text-xs cursor-pointer transition-colors border border-border-primary"
+              >
+                Dismiss
+              </button>
+            </div>
+            <p className="text-[10px] text-text-muted mt-3 pl-7">
+              Trusted by 1,200+ developers to stand out on GitHub.
+            </p>
+          </div>
+        </div>
+      ),
+      {
+        position: 'bottom-right',
+        duration: Infinity,
+        id: 'synthetixgit-game-welcome-cta',
+      }
+    );
+  }
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(LAST_USER_KEY, username);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const lastUser = window.localStorage.getItem(LAST_USER_KEY) || '';
+      const bannerDismissed = window.localStorage.getItem(VISITOR_BANNER_KEY) === '1';
+      if (!bannerDismissed && username !== lastUser && lastUser !== '') {
+        setShowVisitorBanner(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [username]);
+
+  function dismissVisitorBanner() {
+    setShowVisitorBanner(false);
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(VISITOR_BANNER_KEY, '1');
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isCtaDismissed()) return;
+
+    toastTimerRef.current = setTimeout(() => {
+      showToastCta();
+    }, 25000);
+
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!gameOver) return;
+    if (gameOverCtaShownRef.current) return;
+    if (isCtaDismissed()) return;
+
+    gameOverCtaShownRef.current = true;
+    setShowCtaModal(true);
+  }, [gameOver]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -327,13 +509,14 @@ export default function PlayGamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-bg-canvas text-text-primary flex flex-col items-center justify-between p-4 sm:p-6 font-sans">
+      <Toaster />
       {/* ── Top Header ── */}
-      <header className="w-full max-w-5xl flex items-center justify-between py-3 border-b border-slate-800">
+      <header className="w-full max-w-5xl flex items-center justify-between py-3 border-b border-border-primary">
         <button
           type="button"
           onClick={() => router.push(`/studio?user=${username}`)}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-bg-primary hover:bg-bg-secondary text-text-tertiary hover:text-white border border-border-primary text-xs font-bold transition-all cursor-pointer"
         >
           <FiArrowLeft size={14} />
           <span>Back to Studio</span>
@@ -347,8 +530,8 @@ export default function PlayGamePage() {
               onClick={() => setActiveGame(g)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                 activeGame === g
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-brand-500 text-white shadow-card'
+                  : 'bg-bg-primary text-text-muted hover:text-text-secondary border border-border-primary'
               }`}
             >
               {g.replace('-', ' ')}
@@ -357,46 +540,125 @@ export default function PlayGamePage() {
         </div>
       </header>
 
+      {/* ── Visitor Banner CTA ── */}
+      {showVisitorBanner && (
+        <div className="bg-accent-violet-soft border border-accent-violet-border rounded-2xl px-4 py-3 max-w-5xl w-full mx-auto mt-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-2xl flex-shrink-0">👋</span>
+            <p className="text-sm leading-snug min-w-0">
+              <strong className="font-bold">Playing @{username}&apos;s arcade — want YOUR own README with playable games?</strong>{' '}
+              <span className="text-text-tertiary text-xs">Generate one in 2 minutes on SynthetixGit Studio.</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const lastUser = getLocalStorageLastUser();
+                router.push(`/studio?user=${lastUser || username}&mode=profile`);
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+            >
+              <span>✨</span>
+              <span>Start Studio</span>
+            </button>
+            <button
+              type="button"
+              onClick={dismissVisitorBanner}
+              className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-bg-tertiary text-text-muted hover:text-text-primary transition-colors flex-shrink-0"
+              aria-label="Dismiss banner"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── CTA Modal (Game Over / Triggered) ── */}
+      {showCtaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative max-w-md w-full bg-bg-primary border border-border-secondary rounded-3xl shadow-2xl p-6">
+            <button
+              type="button"
+              onClick={dismissCtaModal}
+              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-bg-tertiary text-text-muted hover:text-text-primary transition-colors"
+              aria-label="Close"
+            >
+              <FiX size={16} />
+            </button>
+            <div className="text-center space-y-4 pt-2">
+              <div className="text-4xl leading-none">🎮</div>
+              <h3 className="text-xl font-black tracking-tight text-text-primary leading-snug">
+                Turn Your GitHub Into a Playable Arcade
+              </h3>
+              <p className="text-sm text-text-tertiary leading-relaxed">
+                Your profile visitors can play games too. SynthetixGit auto-generates everything — README, play badges, snake workflow, and more!
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    dismissCtaModal();
+                    handleCtaPrimary();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <span>✨</span>
+                  <span>Generate My README</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissCtaModal}
+                  className="px-4 py-2 rounded-xl bg-transparent hover:bg-bg-secondary text-text-muted hover:text-text-secondary font-bold text-sm cursor-pointer transition-colors border border-border-primary"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Arcade Frame ── */}
       <main className="flex-1 flex flex-col items-center justify-center my-6 max-w-5xl w-full">
-        <div className="p-5 rounded-3xl bg-slate-900/90 border-2 border-slate-800 shadow-2xl space-y-4 w-full text-center">
+        <div className="p-5 rounded-3xl bg-bg-primary/90 border-2 border-border-primary shadow-2xl space-y-4 w-full text-center">
           {/* Score & HUD */}
-          <div className="flex items-center justify-between px-4 py-2 rounded-2xl bg-slate-950 border border-slate-800">
+          <div className="flex items-center justify-between px-4 py-2 rounded-2xl bg-bg-canvas border border-border-primary">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-mono font-bold text-slate-300">
-                PLAYER: <span className="text-blue-400">@{username}</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-accent-emerald animate-pulse" />
+              <span className="text-xs font-mono font-bold text-text-tertiary">
+                PLAYER: <span className="text-brand-400">@{username}</span>
               </span>
             </div>
 
             <div className="flex items-center gap-6">
               <div className="text-xs font-mono font-bold">
-                <span className="text-slate-400 mr-1.5">SCORE:</span>
-                <span className="text-emerald-400 text-sm">{score}</span>
+                <span className="text-text-muted mr-1.5">SCORE:</span>
+                <span className="text-accent-emerald text-sm">{score}</span>
               </div>
               <div className="text-xs font-mono font-bold">
-                <span className="text-slate-400 mr-1.5">HIGH:</span>
-                <span className="text-amber-400 text-sm">{highScore}</span>
+                <span className="text-text-muted mr-1.5">HIGH:</span>
+                <span className="text-accent-amber text-sm">{highScore}</span>
               </div>
             </div>
           </div>
 
           {/* Game Canvas Container */}
-          <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-[#080b13] flex items-center justify-center shadow-inner min-h-[320px]">
+          <div className="relative rounded-2xl overflow-hidden border border-border-primary bg-[#080b13] flex items-center justify-center shadow-inner min-h-[320px]">
             <canvas ref={canvasRef} className="max-w-full h-auto cursor-crosshair" />
 
             {/* Game Over Screen */}
             {gameOver && (
               <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-3">
-                <h2 className="text-2xl font-black text-red-500 tracking-wider">GAME OVER</h2>
-                <p className="text-xs text-slate-300 font-mono">Final Score: {score}</p>
+                <h2 className="text-2xl font-black text-accent-rose tracking-wider">GAME OVER</h2>
+                <p className="text-xs text-text-tertiary font-mono">Final Score: {score}</p>
                 <button
                   type="button"
                   onClick={() => {
                     setGameOver(false);
                     setActiveGame((prev) => prev);
                   }}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-600/30"
+                  className="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-card-lg"
                 >
                   <FiRotateCcw size={14} />
                   <span>Play Again</span>
@@ -405,15 +667,15 @@ export default function PlayGamePage() {
             )}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-400 px-2">
+          <div className="flex items-center justify-between text-xs text-text-muted px-2">
             <span>🕹️ Controls: Arrow Keys / WASD / Mouse Drag</span>
-            <span className="text-emerald-400 font-mono">Live Commit Levels Enabled</span>
+            <span className="text-accent-emerald font-mono">Live Commit Levels Enabled</span>
           </div>
         </div>
       </main>
 
       {/* ── Footer ── */}
-      <footer className="w-full text-center text-xs text-slate-500 py-3 border-t border-slate-800">
+      <footer className="w-full text-center text-xs text-text-muted py-3 border-t border-border-primary">
         SynthetixGit Interactive Arcade Suite • Powered by HTML5 Canvas & GitHub Commits
       </footer>
       {/* On-screen Mobile D-Pad Controls */}
@@ -421,7 +683,7 @@ export default function PlayGamePage() {
         <button
           type="button"
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))}
-          className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+          className="w-14 h-12 rounded-2xl bg-bg-primary border border-border-primary text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
         >
           ▲
         </button>
@@ -429,21 +691,21 @@ export default function PlayGamePage() {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))}
-            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+            className="w-14 h-12 rounded-2xl bg-bg-primary border border-border-primary text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
           >
             ◀
           </button>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }))}
-            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+            className="w-14 h-12 rounded-2xl bg-bg-primary border border-border-primary text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
           >
             ▼
           </button>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))}
-            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+            className="w-14 h-12 rounded-2xl bg-bg-primary border border-border-primary text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
           >
             ▶
           </button>
