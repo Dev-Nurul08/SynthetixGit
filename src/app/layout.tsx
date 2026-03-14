@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { getAppUrl } from "@/lib/app-url";
+import { Providers } from "@/components/Providers";
+import { PostHogProvider } from "@/app/providers/PostHogProvider";
+import Footer from "@/components/Footer";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -49,6 +53,11 @@ export const metadata: Metadata = {
     "GitHub widgets",
     "SVG generator",
     "Next.js",
+    "github contribution graph",
+    "github pixel art",
+    "github activity generator",
+    "customize github profile",
+    "git art",
   ],
   authors: [{ name: "SynthetixGit", url: "https://github.com/Dev-Nurul08" }],
   creator: "Dev-Nurul08",
@@ -62,7 +71,7 @@ export const metadata: Metadata = {
       "Craft GitHub profile READMEs, contribution artwork, dynamic SVG widgets, and project docs from one modern studio.",
     images: [
       {
-        url: "/og.png",
+        url: "/opengraph-image.png",
         width: 1200,
         height: 630,
         alt: "SynthetixGit Studio",
@@ -74,7 +83,7 @@ export const metadata: Metadata = {
     title: "SynthetixGit — GitHub Profile & README Studio",
     description:
       "Profile READMEs, contribution art, widgets, arcade games, and deploy — all in one.",
-    images: ["/og.png"],
+    images: ["/opengraph-image.png"],
   },
   robots: {
     index: true,
@@ -91,6 +100,9 @@ export const metadata: Metadata = {
     apple: "/favicon.ico",
   },
   category: "Developer Tools",
+  verification: {
+    google: "FpMq1620MPw97ShOx5JxKpvxsk0ON2uvsx7jUCBk_Ks",
+  },
 };
 
 export const viewport = {
@@ -104,21 +116,43 @@ export const viewport = {
   colorScheme: "dark",
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "SynthetixGit Studio",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  description:
+    "Craft GitHub profile READMEs, contribution artwork, dynamic SVG widgets, project documentation, and playable commit games from one modern studio.",
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col relative">
-        <div id="page-root" className="flex min-h-screen flex-col flex-1">
-          {children}
-        </div>
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col relative"
+      >
+        <PostHogProvider>
+          <Providers>
+            <div id="page-root" className="flex min-h-screen flex-col flex-1">
+              {children}
+            </div>
+            <Footer />
+          </Providers>
+        </PostHogProvider>
+
         <Toaster
           position="bottom-right"
           toastOptions={{
@@ -148,6 +182,12 @@ export default function RootLayout({
               },
             },
           }}
+        />
+
+        <Script
+          id="json-ld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </body>
     </html>

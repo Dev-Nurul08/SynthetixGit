@@ -1,987 +1,752 @@
 "use client";
 
-import Link from "next/link";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
-import type { IconType } from "react-icons";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
 import {
-  FiActivity,
-  FiArrowRight,
-  FiBookOpen,
-  FiBox,
-  FiCheckCircle,
-  FiCode,
-  FiCpu,
-  FiExternalLink,
   FiGithub,
+  FiArrowRight,
+  FiCode,
   FiGrid,
-  FiLayers,
   FiPlay,
-  FiRefreshCw,
-  FiShield,
-  FiSliders,
-  FiStar,
-  FiTerminal,
-  FiUploadCloud,
+  FiActivity,
+  FiBox,
   FiZap,
-  FiChevronRight,
-  FiCommand,
-  FiDownload,
-  FiCopy,
+  FiStar,
+  FiUsers,
+  FiCheck,
+  FiLinkedin,
+  FiExternalLink,
+  FiTerminal,
+  FiLayers,
 } from "react-icons/fi";
-import toast from "react-hot-toast";
-import { motion } from "framer-motion";
-import { ALL_15_TEMPLATES } from "@/lib/template-engine";
-import { useProfileStore } from "@/stores/profile-store";
-import { HeroCanvas } from "@/components/hero/HeroCanvas";
-import {
-  Button,
-  Card,
-  Input,
-  Badge,
-  IconTile,
-  SectionHeader,
-  Tabs,
-} from "@/components/ui";
+import { getPatternGrid } from "@/lib/patternUtils";
 
-type StudioMode = "profile" | "canvas" | "repo" | "arcade" | "widgets";
+/* ──────────────────────────────────────────────────
+   HERO INTERACTIVE CONTRIBUTION ART PAINTER
+────────────────────────────────────────────────── */
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-interface FeatureLauncher {
-  id: StudioMode;
-  title: string;
-  label: string;
-  summary: string;
-  href: string;
-  icon: IconType;
-  tone: "brand" | "emerald" | "amber" | "rose" | "violet";
+const HEART_MATRIX = [
+  [0, 1, 1, 0, 0, 1, 1, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 1, 1, 1, 0],
+  [0, 0, 1, 1, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 0, 0, 0],
+];
+
+const INVADER_MATRIX = [
+  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+  [0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+  [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+  [0, 1, 1, 0, 1, 1, 0, 1, 1, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+];
+
+function centerMatrix(pattern: number[][]): number[][] {
+  const result: number[][] = Array(7).fill(0).map(() => Array(52).fill(0));
+  const patWidth = pattern[0].length;
+  const startCol = Math.max(0, Math.floor((52 - patWidth) / 2));
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < patWidth && startCol + c < 52; c++) {
+      result[r][startCol + c] = pattern[r][c];
+    }
+  }
+  return result;
 }
 
-interface PhaseAuditItem {
-  phase: string;
-  title: string;
-  status: "Operational" | "Partial" | "Verified";
-  benchmark: string;
-  note: string;
-}
+function HeroInteractivePainter() {
+  const [word, setWord] = useState("OCTOCAT");
+  const [grid, setGrid] = useState<number[][]>(() => {
+    const raw = getPatternGrid("OCTOCAT");
+    return raw.map((r) => {
+      const row = [...r];
+      while (row.length < 52) row.push(0);
+      return row.slice(0, 52);
+    });
+  });
 
-const DEMO_USER = "octocat";
-
-const featureLaunchers: FeatureLauncher[] = [
-  {
-    id: "profile",
-    title: "Profile README Studio",
-    label: "Profile",
-    summary:
-      "Live markdown editor, rendered preview, 15 presets, 200+ badges, trophy cabinet, widgets, and real-time GitHub analytics.",
-    href: `/studio?user=${DEMO_USER}&mode=profile`,
-    icon: FiSliders,
-    tone: "brand",
-  },
-  {
-    id: "canvas",
-    title: "Contribution Art Painter",
-    label: "Canvas",
-    summary:
-      "52 x 7 grid pixel painter with word stamps, palette picker, and exportable backdated commit script generator.",
-    href: `/studio?user=${DEMO_USER}&mode=canvas`,
-    icon: FiGrid,
-    tone: "emerald",
-  },
-  {
-    id: "repo",
-    title: "Project README Builder",
-    label: "Repo Docs",
-    summary:
-      "Repository documentation generator with feature lists, architecture tree, environment tables, and API reference tables.",
-    href: `/studio?user=${DEMO_USER}&mode=repo`,
-    icon: FiBox,
-    tone: "amber",
-  },
-  {
-    id: "arcade",
-    title: "GitHub Arcade",
-    label: "Arcade",
-    summary:
-      "Playable canvas games: Snake, Brick Breaker, and Pac-Man style commit runs directly mapped from your history.",
-    href: `/studio?user=${DEMO_USER}&mode=arcade`,
-    icon: FiPlay,
-    tone: "rose",
-  },
-  {
-    id: "widgets",
-    title: "Dynamic SVG Widgets",
-    label: "Widgets",
-    summary:
-      "Typing SVG headers, Spotify-style now playing, LeetCode progress cards, and blog feed embed generators.",
-    href: `/studio?user=${DEMO_USER}&mode=widgets`,
-    icon: FiActivity,
-    tone: "violet",
-  },
-];
-
-const phaseAudit: PhaseAuditItem[] = [
-  {
-    phase: "01",
-    title: "GitHub Aggregator",
-    status: "Operational",
-    benchmark: "/api/user/scan/[username], GraphQL, REST fallback, cache",
-    note: "Core scanner ships with 6-hour in-memory cache; Redis layer and token rotation are planned.",
-  },
-  {
-    phase: "02",
-    title: "Split Workspace",
-    status: "Verified",
-    benchmark: "15 template compile checks pass",
-    note: "Profile studio ships controls, editor, preview, and presets.",
-  },
-  {
-    phase: "03",
-    title: "Typography Engine",
-    status: "Operational",
-    benchmark: "/api/svg/header",
-    note: "Server-rendered SVG headers cover cartoon, glitch, terminal, script, and minimal styles.",
-  },
-  {
-    phase: "04",
-    title: "Contribution Painter",
-    status: "Operational",
-    benchmark: "Canvas painter and paint-graph.sh export",
-    note: "The 52 x 7 painter and bash exporter ship; a Node runner export is planned.",
-  },
-  {
-    phase: "05",
-    title: "Arcade Games",
-    status: "Partial",
-    benchmark: "/play/[username]/[game]",
-    note: "Canvas games ship; levels are generated locally instead of using fetched contribution matrices.",
-  },
-  {
-    phase: "06",
-    title: "SVG Dividers",
-    status: "Verified",
-    benchmark: "/api/svg/divider",
-    note: "Eight separator styles ship as server-rendered SVG responses.",
-  },
-  {
-    phase: "07",
-    title: "Badges And Trophies",
-    status: "Operational",
-    benchmark: "Badge registry, picker, trophy controls",
-    note: "Badge and trophy customization ships; registry is growing.",
-  },
-  {
-    phase: "08",
-    title: "Project README Builder",
-    status: "Operational",
-    benchmark: "compileProjectReadme",
-    note: "Project README generation works from form data.",
-  },
-  {
-    phase: "09",
-    title: "Dynamic Widgets",
-    status: "Partial",
-    benchmark: "/api/svg/spotify and widget compilers",
-    note: "Embeddable SVG/widget strings ship; live provider OAuth sync is planned.",
-  },
-  {
-    phase: "10",
-    title: "GitHub Deployer",
-    status: "Partial",
-    benchmark: "/api/github/deploy",
-    note: "Direct deploy works with PAT/env token; full OAuth flow is planned.",
-  },
-];
-
-const benchmarkCards = [
-  {
-    label: "Build",
-    value: "Next 16",
-    detail: "Production routes compile with Turbopack.",
-    icon: FiCheckCircle,
-    tone: "emerald" as const,
-  },
-  {
-    label: "Templates",
-    value: "15 / 15",
-    detail: "README compiler validates every preset.",
-    icon: FiLayers,
-    tone: "brand" as const,
-  },
-  {
-    label: "Routes",
-    value: "13 app routes",
-    detail: "Studio, arcade, API, and SVG surfaces ship.",
-    icon: FiCpu,
-    tone: "violet" as const,
-  },
-];
-
-const statusTone: Record<PhaseAuditItem["status"], "emerald" | "amber" | "brand"> = {
-  Operational: "brand",
-  Partial: "amber",
-  Verified: "emerald",
-};
-
-const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
-
-export default function HomePage() {
-  const router = useRouter();
-  const [inputValue, setInputValue] = useState("");
-  const [activeFeature, setActiveFeature] = useState<StudioMode>("profile");
-  const [activeTemplateId, setActiveTemplateId] = useState(
-    ALL_15_TEMPLATES[0]?.id ?? "beast-mode-neon"
-  );
-  const { fetchProfile, isLoading } = useProfileStore();
-
-  const activeTemplate = useMemo(
-    () =>
-      ALL_15_TEMPLATES.find((template) => template.id === activeTemplateId) ??
-      ALL_15_TEMPLATES[0],
-    [activeTemplateId]
-  );
-
-  const activeFeatureData =
-    featureLaunchers.find((feature) => feature.id === activeFeature) ??
-    featureLaunchers[0];
-
-  const routeForMode = (username: string, mode: StudioMode) => {
-    if (mode === "arcade") {
-      return `/games?user=${encodeURIComponent(username)}`;
-    }
-    if (mode === "canvas") {
-      return `/art-generator?user=${encodeURIComponent(username)}`;
-    }
-    return `/builder?user=${encodeURIComponent(username)}`;
+  const handleWordChange = (newWord: string) => {
+    const clean = newWord.toUpperCase().slice(0, 8);
+    setWord(clean);
+    const raw = getPatternGrid(clean);
+    const padded = raw.map((r) => {
+      const row = [...r];
+      while (row.length < 52) row.push(0);
+      return row.slice(0, 52);
+    });
+    setGrid(padded);
   };
 
-  const handleScan = async (
-    mode: StudioMode = activeFeature,
-    usernameOverride?: string
-  ) => {
-    const target = (usernameOverride || inputValue).trim();
-    if (!target) {
-      toast.error("Enter a GitHub username first.");
-      return;
-    }
-    const toastId = toast.loading(`Scanning @${target}`);
-    try {
-      const data = await fetchProfile(target);
-      const resolvedUsername = data?.profile.username || target;
-      toast.success(data ? `Loaded @${resolvedUsername}` : `Opening @${resolvedUsername}`, {
-        id: toastId,
-      });
-      router.push(routeForMode(resolvedUsername, mode));
-    } catch {
-      toast.dismiss(toastId);
-      router.push(routeForMode(target, mode));
+  const handlePreset = (type: "heart" | "invader" | "wave" | "word", val?: string) => {
+    if (type === "heart") {
+      setWord("HEART");
+      setGrid(centerMatrix(HEART_MATRIX));
+    } else if (type === "invader") {
+      setWord("INVADER");
+      setGrid(centerMatrix(INVADER_MATRIX));
+    } else if (type === "wave") {
+      setWord("WAVE");
+      const wave = Array(7).fill(0).map(() => Array(52).fill(0));
+      for (let c = 0; c < 52; c++) {
+        const r = Math.round(3 + 2.5 * Math.sin(c / 3.5));
+        if (r >= 0 && r < 7) wave[r][c] = 1;
+      }
+      setGrid(wave);
+    } else if (type === "word" && val) {
+      handleWordChange(val);
     }
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    void handleScan();
-  };
-
-  const quickUsers = ["octocat", "torvalds", "shadcn", "leerob"];
+  const activeCells = grid.reduce((acc, row) => acc + row.filter((c) => c > 0).length, 0);
 
   return (
-    <main className="relative overflow-x-hidden text-text-primary">
-      <Header />
-
-      <section className="relative isolate overflow-hidden pt-24 pb-20 sm:pt-32 sm:pb-28">
-        <div className="absolute inset-0">
-          <HeroCanvas />
+    <div className="w-full max-w-4xl mx-auto rounded-2xl p-5 sm:p-6 bg-slate-900/80 border border-slate-800 shadow-2xl backdrop-blur-xl">
+      {/* Interactive Controls Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-800/80">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1.5 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Live Canvas:
+          </span>
+          <input
+            type="text"
+            value={word}
+            onChange={(e) => handleWordChange(e.target.value)}
+            maxLength={8}
+            placeholder="TYPE WORD"
+            className="w-36 sm:w-44 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700/80 text-emerald-400 font-mono font-bold text-sm tracking-widest uppercase focus:outline-none focus:border-emerald-500"
+          />
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-bg-canvas opacity-90" />
 
-        <div className={`relative ${container} pt-6`}>
-          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
-              className="space-y-7"
+        {/* Preset Chips */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {["OCTOCAT", "NURUL", "DEV", "PRO", "2025"].map((w) => (
+            <button
+              key={w}
+              type="button"
+              onClick={() => handlePreset("word", w)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold font-mono transition-all cursor-pointer ${
+                word === w
+                  ? "bg-emerald-500 text-slate-950 font-black"
+                  : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700"
+              }`}
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-border-secondary bg-bg-secondary/70 px-3.5 py-1.5 backdrop-blur">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
-                </span>
-                <span className="text-xs font-semibold text-text-secondary">
-                  Next 16 · Turbopack · Zero-config studio
-                </span>
-              </div>
+              {w}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => handlePreset("heart")}
+            className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 text-rose-300 hover:text-rose-200 hover:bg-slate-700 transition-all cursor-pointer"
+          >
+            ❤️ Heart
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePreset("invader")}
+            className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 text-cyan-300 hover:text-cyan-200 hover:bg-slate-700 transition-all cursor-pointer"
+          >
+            👾 Invader
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePreset("wave")}
+            className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 text-teal-300 hover:text-teal-200 hover:bg-slate-700 transition-all cursor-pointer"
+          >
+            🌊 Wave
+          </button>
+        </div>
+      </div>
 
-              <div className="space-y-5">
-                <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-text-primary sm:text-5xl lg:text-6xl xl:text-[64px]">
-                  Craft a{" "}
-                  <span className="text-brand-300">
-                    GitHub README
-                  </span>
-                  <br />
-                  that actually stands out.
-                </h1>
-                <p className="max-w-2xl text-base leading-relaxed text-text-tertiary sm:text-lg">
-                  Profile READMEs, contribution artwork, project docs, dynamic SVG widgets,
-                  and playable GitHub arcade — all from one clean, modern studio.
-                </p>
-              </div>
+      {/* The 52x7 Matrix Display */}
+      <div className="overflow-x-auto pb-2 select-none">
+        <div className="min-w-[680px]">
+          {/* Months header */}
+          <div className="flex pl-7 text-[10px] font-mono font-bold text-slate-500 gap-[24px] mb-1.5">
+            {MONTH_NAMES.map((m) => (
+              <span key={m}>{m}</span>
+            ))}
+          </div>
 
-              <Card className="!p-2 !rounded-2xl shadow-[0_8px_60px_-16px_rgba(0,0,0,0.7)]">
-                <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex-1">
-                    <Input
-                      leftIcon={<FiGithub size={18} />}
-                      placeholder="Enter your GitHub username"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      className="!h-12 !rounded-xl !border-0 !bg-transparent !shadow-none focus-within:!ring-0"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    loading={isLoading}
-                    fullWidth
-                    rightIcon={!isLoading ? <FiArrowRight size={18} /> : undefined}
-                    disabled={!inputValue.trim()}
-                    className="sm:w-auto"
-                  >
-                    Open Studio
-                  </Button>
-                </form>
+          <div className="flex gap-2">
+            {/* Day labels */}
+            <div className="flex flex-col justify-between text-[9px] font-mono text-slate-500 py-0.5 select-none">
+              <span>Sun</span>
+              <span>Tue</span>
+              <span>Thu</span>
+              <span>Sat</span>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-1.5 text-xs text-text-muted">
-                  <span className="font-semibold text-text-tertiary">Try one:</span>
-                  {quickUsers.map((username) => (
-                    <button
-                      key={username}
-                      type="button"
-                      onClick={() => {
-                        setInputValue(username);
-                        void handleScan(activeFeature, username);
-                      }}
-                      className="rounded-lg border border-border-primary bg-bg-tertiary/40 px-2.5 py-1 font-mono text-[11px] font-medium text-text-secondary transition-colors hover:border-border-secondary hover:bg-bg-tertiary hover:text-text-primary"
-                    >
-                      @{username}
-                    </button>
-                  ))}
+            {/* Matrix blocks */}
+            <div className="flex flex-col gap-[3.5px] p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 shadow-inner">
+              {grid.map((row, ri) => (
+                <div key={ri} className="flex gap-[3.5px]">
+                  {row.map((cell, ci) => {
+                    const isActive = cell > 0;
+                    return (
+                      <div
+                        key={`${ri}-${ci}`}
+                        className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-[2px] transition-all duration-300 ${
+                          isActive
+                            ? "bg-[#39d353] shadow-[0_0_8px_rgba(57,211,83,0.65)] border border-[#26a641]"
+                            : "bg-[#161b22] border border-slate-800/50"
+                        }`}
+                      />
+                    );
+                  })}
                 </div>
-              </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
-                <div className="flex items-center gap-2">
-                  <IconTile icon={<FiCheckCircle size={14} />} tone="emerald" size="sm" />
-                  <span>No install required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <IconTile icon={<FiUploadCloud size={14} />} tone="brand" size="sm" />
-                  <span>One-click deploy</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <IconTile icon={<FiDownload size={14} />} tone="violet" size="sm" />
-                  <span>Markdown export</span>
-                </div>
-              </div>
+      {/* Footer details */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400">
+        <div className="flex items-center gap-2 font-mono">
+          <span className="text-emerald-400 font-bold">{activeCells}</span> active calendar cells
+          <span className="text-slate-600">·</span>
+          <span>~{activeCells * 3} backdated commits</span>
+        </div>
+        <div className="text-[11px] text-slate-400">
+          ✨ Type any word or name to paint in real-time
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────
+   ANIMATED COUNTER
+────────────────────────────────────────────────── */
+function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const step = to / 60;
+    const id = setInterval(() => {
+      start += step;
+      if (start >= to) {
+        setVal(to);
+        clearInterval(id);
+      } else {
+        setVal(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(id);
+  }, [inView, to]);
+
+  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
+}
+
+/* ──────────────────────────────────────────────────
+   FEATURE DATA
+────────────────────────────────────────────────── */
+const FEATURES = [
+  {
+    icon: FiGrid,
+    label: "Contribution Forge",
+    title: "52×7 Calendar Art Studio",
+    desc: "Type words, load templates, or freehand draw on your 52×7 calendar. Commit directly to GitHub or export Bash & PowerShell scripts.",
+    gradient: "from-emerald-500 to-teal-600",
+    glow: "rgba(52,211,153,0.15)",
+  },
+  {
+    icon: FiZap,
+    label: "README Wizard",
+    title: "6-Stage Profile Wizard",
+    desc: "Answer a few questions and get a stunning, animated, metric-dense GitHub profile README in under 2 minutes.",
+    gradient: "from-cyan-500 to-blue-600",
+    glow: "rgba(6,182,212,0.15)",
+  },
+  {
+    icon: FiPlay,
+    label: "Arcade Games",
+    title: "Playable Profile Arcade",
+    desc: "Embed playable Snake, Brick Breaker, and Pac-Man games right on your README for visitors to play directly.",
+    gradient: "from-rose-500 to-pink-600",
+    glow: "rgba(251,113,133,0.15)",
+  },
+  {
+    icon: FiActivity,
+    label: "Dynamic Widgets",
+    title: "Real-time SVG Widgets",
+    desc: "Dynamic live typing banners, Spotify now-playing cards, LeetCode counters, and GitHub commit streak cards.",
+    gradient: "from-violet-500 to-purple-600",
+    glow: "rgba(167,139,250,0.15)",
+  },
+  {
+    icon: FiBox,
+    label: "Project Docs",
+    title: "Project README Builder",
+    desc: "Auto-scan repositories to generate complete project documentation with architecture diagrams and API tables.",
+    gradient: "from-amber-500 to-orange-600",
+    glow: "rgba(251,191,36,0.15)",
+  },
+  {
+    icon: FiLayers,
+    label: "15 Presets",
+    title: "15 Theme Styles",
+    desc: "Transform your profile aesthetic with Cyberpunk Glitch, Tokyo Night, Dracula, Emerald Matrix, and Nordic Snow.",
+    gradient: "from-sky-500 to-indigo-600",
+    glow: "rgba(56,189,248,0.15)",
+  },
+];
+
+/* ──────────────────────────────────────────────────
+   TERMINAL DEMO
+────────────────────────────────────────────────── */
+const TERMINAL_LINES = [
+  { text: "$ synthetixgit forge --user octocat", color: "#22d3ee" },
+  { text: "✓ Connected via GitHub OAuth 2.0", color: "#34d399" },
+  { text: "✓ Generated 52×7 contribution matrix: 'OCTOCAT'", color: "#34d399" },
+  { text: "✓ Backdated commit schedule created (184 commits)", color: "#34d399" },
+  { text: "✓ Profile README built with 6 animated widgets", color: "#34d399" },
+  { text: "✓ Playable arcade canvas compiled (Snake, Breakout, Pac-Man)", color: "#a78bfa" },
+  { text: "$ Deploy status: Deployed to GitHub → 200 OK", color: "#fbbf24" },
+];
+
+function TerminalDemo() {
+  const [lines, setLines] = useState<typeof TERMINAL_LINES>([]);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (!inView) return;
+    let i = 0;
+    const id = setInterval(() => {
+      if (i >= TERMINAL_LINES.length) {
+        clearInterval(id);
+        return;
+      }
+      setLines((prev) => [...prev, TERMINAL_LINES[i]]);
+      i++;
+    }, 350);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  return (
+    <div ref={ref} className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden font-mono">
+      <div className="flex items-center px-4 py-3 bg-slate-950 border-b border-slate-800/80">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+        </div>
+        <span className="ml-3 text-xs text-slate-400 flex items-center gap-1.5">
+          <FiTerminal size={12} />
+          synthetixgit-studio — automated-forge
+        </span>
+      </div>
+      <div className="p-5 space-y-2 min-h-[220px] bg-slate-950/70 text-xs">
+        {lines.map((line, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ color: line.color }}
+          >
+            {line.text}
+          </motion.div>
+        ))}
+        {lines.length < TERMINAL_LINES.length && (
+          <span className="inline-block w-2 h-4 bg-cyan-400 animate-pulse" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────
+   MAIN HOMEPAGE
+────────────────────────────────────────────────── */
+export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const username = (session?.user as { username?: string })?.username || session?.user?.name;
+      if (username === "Dev-Shivam-05") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin" />
+          <span className="text-xs font-mono text-slate-400">Initializing SynthetixGit...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden selection:bg-cyan-500/30 selection:text-white">
+      {/* ── TOPBAR NAVBAR ── */}
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <FiGithub size={18} className="text-slate-950 font-black" />
+            </div>
+            <span className="font-black text-lg tracking-tight text-white flex items-center gap-1.5">
+              Synthetix<span className="text-cyan-400">Git</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                PRO
+              </span>
+            </span>
+          </a>
+
+          <div className="hidden md:flex items-center gap-7 text-xs font-bold text-slate-300">
+            <a href="/studio" className="hover:text-white transition-colors">Studio</a>
+            <a href="/art-generator" className="hover:text-emerald-400 transition-colors">Art Forge</a>
+            <a href="/games" className="hover:text-rose-400 transition-colors">Arcade Games</a>
+            <a href="/contact" className="hover:text-white transition-colors">Support</a>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              id="nav-signin-btn"
+              type="button"
+              onClick={() => signIn("github")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 text-xs font-black hover:opacity-95 transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+            >
+              <FiGithub size={15} />
+              Sign in with GitHub
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── HERO SECTION ── */}
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 overflow-hidden">
+        {/* Ambient Backdrops */}
+        <div
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse, rgba(6,182,212,0.14) 0%, rgba(52,211,153,0.08) 35%, transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
+
+        <div className="relative max-w-7xl mx-auto space-y-12">
+          {/* Header Texts */}
+          <div className="text-center space-y-6 max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300 shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-mono text-emerald-400 font-bold">SynthetixGit v2.0</span>
+              <span className="text-slate-600">·</span>
+              <span>Open Source GitHub Profile &amp; Contribution Forge</span>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-              className="relative"
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] text-white"
             >
-              <WorkspacePreview activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
+              Your GitHub Profile &amp; Calendar,{" "}
+              <span className="bg-gradient-to-r from-cyan-400 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                Reimagined.
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed"
+            >
+              Paint custom pixel artwork onto your 52×7 contribution calendar, generate animated metric-packed profile READMEs, embed playable arcade games, and build dynamic SVG widgets.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+            >
+              <button
+                id="hero-signin-btn"
+                type="button"
+                onClick={() => signIn("github")}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-emerald-500 to-teal-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-cyan-500/20 hover:scale-[1.02] transition-all cursor-pointer"
+              >
+                <FiGithub size={18} />
+                Sign in with GitHub — Free Forever
+                <FiArrowRight size={16} />
+              </button>
+
+              <a
+                href="/studio"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all shadow-sm"
+              >
+                <FiPlay size={16} className="text-cyan-400" />
+                Try Studio Demo
+              </a>
             </motion.div>
           </div>
+
+          {/* Interactive Live Hero Painter */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <HeroInteractivePainter />
+          </motion.div>
         </div>
       </section>
 
-      <section className="relative py-20 sm:py-28">
-        <div className={`${container}`}>
-          <div className="mb-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-end">
-            <SectionHeader
-              eyebrow="Workspaces"
-              eyebrowTone="brand"
-              title="Five surfaces. One studio."
-              description="Jump directly into the exact generator you need. Each workspace ships with its own controls, live preview, and deployment hooks."
-            />
-            <Link href={`/studio?user=${DEMO_USER}&mode=profile`}>
-              <Button variant="secondary" size="lg" rightIcon={<FiArrowRight size={16} />}>
-                Open full studio
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-            {featureLaunchers.map((feature, idx) => {
-              const Icon = feature.icon;
+      {/* ── STATS COUNTER BAR ── */}
+      <section className="py-12 border-y border-slate-800/80 bg-slate-900/40 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { val: 1200, suffix: "+", label: "Developers", icon: FiUsers, color: "text-cyan-400" },
+              { val: 52, suffix: " wks", label: "Calendar Art Matrix", icon: FiGrid, color: "text-emerald-400" },
+              { val: 15, suffix: " Presets", label: "Design Themes", icon: FiStar, color: "text-amber-400" },
+              { val: 3, suffix: " Games", label: "Playable Canvas Arcades", icon: FiPlay, color: "text-rose-400" },
+            ].map((stat, i) => {
+              const Icon = stat.icon;
               return (
-                <motion.div
-                  key={feature.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.5, delay: idx * 0.07, ease: [0.2, 0.8, 0.2, 1] }}
-                >
-                  <Link href={feature.href} className="block h-full">
-                    <Card hover className="group h-full flex flex-col !p-6">
-                      <IconTile icon={<Icon size={22} />} tone={feature.tone} size="lg" />
-                      <h3 className="mt-5 text-lg font-black text-text-primary">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-2 flex-1 text-sm leading-relaxed text-text-tertiary">
-                        {feature.summary}
-                      </p>
-                      <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-brand-300">
-                        <span>Launch workspace</span>
-                        <FiChevronRight
-                          size={16}
-                          className="transition-transform group-hover:translate-x-1"
-                        />
-                      </div>
-                    </Card>
-                  </Link>
-                </motion.div>
+                <div key={i} className="space-y-1">
+                  <Icon size={22} className={`mx-auto ${stat.color}`} />
+                  <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    <Counter to={stat.val} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    {stat.label}
+                  </div>
+                </div>
               );
             })}
           </div>
         </div>
       </section>
 
-      <section className="relative py-20 sm:py-28 bg-bg-secondary/30 border-y border-border-primary">
-        <div className={`${container}`}>
-          <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <SectionHeader
-              eyebrow="Benchmarks"
-              eyebrowTone="emerald"
-              title="Built for real pipelines."
-              description="The project ships with a production build gate, ESLint gate, and a local verification command that validates every single README template before deploy."
-            >
-              <Link href={`/studio?user=${DEMO_USER}&mode=profile`} className="mt-4">
-                <Button variant="primary" size="lg" rightIcon={<FiArrowRight size={16} />}>
-                  Start generating
-                </Button>
-              </Link>
-            </SectionHeader>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {benchmarkCards.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  >
-                    <Card glow className="!p-6 h-full">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                          {item.label}
-                        </span>
-                        <IconTile icon={<Icon size={18} />} tone={item.tone} size="md" />
-                      </div>
-                      <p className="mt-5 text-2xl font-black text-text-primary">{item.value}</p>
-                      <p className="mt-2 text-xs leading-relaxed text-text-tertiary">
-                        {item.detail}
-                      </p>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
+      {/* ── 6 STUDIO POWERHOUSE FEATURES ── */}
+      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto space-y-12">
+        <div className="text-center space-y-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 font-mono">
+            Ecosystem Suite
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-black text-white">
+            Everything you need to dominate on GitHub
+          </h2>
+          <p className="text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            From backdated contribution art to playable canvas arcades and dynamic typing SVG banners — all accessible from one cohesive studio.
+          </p>
         </div>
-      </section>
 
-      <section className="relative py-20 sm:py-28">
-        <div className={`${container}`}>
-          <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="lg:sticky lg:top-28">
-              <SectionHeader
-                eyebrow="Preset Engine"
-                eyebrowTone="violet"
-                title="15 README styles. One compiler."
-                description="Pick from a growing collection of hand-tuned presets — each one compiles into clean, GitHub-optimized markdown. Launch any preset directly into the profile workspace."
-              />
-              {activeTemplate && (
-                <Link
-                  href={`/studio?user=${DEMO_USER}&mode=profile&template=${activeTemplate.id}`}
-                  className="mt-6 inline-block"
-                >
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    rightIcon={<FiArrowRight size={16} />}
-                  >
-                    Open {activeTemplate.name}
-                  </Button>
-                </Link>
-              )}
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {ALL_15_TEMPLATES.map((template, idx) => {
-                const selected = template.id === activeTemplateId;
-                return (
-                  <motion.button
-                    key={template.id}
-                    type="button"
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-40px" }}
-                    transition={{ duration: 0.35, delay: (idx % 6) * 0.05 }}
-                    whileHover={{ y: -3, scale: 1.01 }}
-                    whileTap={{ y: 0, scale: 0.99 }}
-                    onClick={() => setActiveTemplateId(template.id)}
-                    className={[
-                      "relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200",
-                      selected
-                        ? "border-brand-400/40 bg-brand-500/8 shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_8px_40px_-12px_rgba(34,211,238,0.35)]"
-                        : "border-border-primary bg-bg-secondary/60 hover:border-border-secondary hover:bg-bg-tertiary/60",
-                    ].join(" ")}
-                  >
-                    {selected && (
-                      <span className="absolute right-3 top-3 rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
-                        Active
-                      </span>
-                    )}
-                    <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                      {template.id}
-                    </span>
-                    <h3 className="mt-2 text-sm font-black text-text-primary">
-                      {template.name}
-                    </h3>
-                    <p className="mt-1.5 text-xs leading-relaxed text-text-tertiary line-clamp-3">
-                      {template.desc}
-                    </p>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative py-20 sm:py-28 bg-bg-secondary/30 border-y border-border-primary">
-        <div className={`${container}`}>
-          <div className="mb-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-end">
-            <SectionHeader
-              eyebrow="Phase Audit"
-              eyebrowTone="rose"
-              title="What ships, what's partial, what's verified."
-              description="Ten tracked surfaces from the roadmap — every feature is benchmarked against an explicit entrypoint you can test right now."
-            />
-            <a
-              href="https://github.com/Dev-Nurul08/SynthetixGit/blob/main/docs/ARCHITECTURE.md"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="lg" rightIcon={<FiExternalLink size={15} />}>
-                Architecture file
-              </Button>
-            </a>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {phaseAudit.map((item, idx) => (
-              <motion.article
-                key={item.phase}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.4, delay: (idx % 6) * 0.06 }}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURES.map((feat, i) => {
+            const Icon = feat.icon;
+            return (
+              <div
+                key={i}
+                className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-1 flex flex-col justify-between"
               >
-                <Card className="!p-6">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-border-secondary bg-bg-tertiary font-mono text-sm font-black text-brand-300">
-                        {item.phase}
-                      </span>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-black text-text-primary">{item.title}</h3>
-                        <p className="mt-1 break-all font-mono text-[11px] text-text-muted">
-                          {item.benchmark}
-                        </p>
-                      </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feat.gradient} flex items-center justify-center shadow-lg text-white`}>
+                      <Icon size={20} />
                     </div>
-                    <Badge tone={statusTone[item.status]} dot>
-                      {item.status}
-                    </Badge>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      {feat.label}
+                    </span>
                   </div>
-                  <p className="mt-5 text-sm leading-relaxed text-text-tertiary">
-                    {item.note}
-                  </p>
-                </Card>
-              </motion.article>
-            ))}
-          </div>
+                  <h3 className="text-lg font-black text-white">{feat.title}</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-bold text-slate-400">
+                  <a href="/studio" className="hover:text-cyan-400 transition-colors flex items-center gap-1">
+                    Try Module <FiArrowRight size={12} />
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      <Footer />
-    </main>
-  );
-}
-
-function Header() {
-  const navLinks = [
-    { href: "#workspaces", label: "Workspaces" },
-    { href: "#benchmarks", label: "Benchmarks" },
-    { href: "#presets", label: "Presets" },
-    { href: "#audit", label: "Audit" },
-  ];
-  return (
-    <header className="fixed inset-x-0 top-0 z-50">
-      <div className="mt-4 mx-3 sm:mx-auto sm:max-w-7xl sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between gap-4 rounded-2xl border border-border-primary/70 bg-bg-primary/70 px-3 backdrop-blur-xl shadow-[0_4px_40px_-12px_rgba(0,0,0,0.6)] sm:px-4">
-          <Link href="/" className="flex min-w-0 items-center gap-3 pl-1">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-brand-400/30 bg-brand-500/10 text-brand-200 shadow-[0_0_24px_-8px_rgba(34,211,238,0.5)]">
-              <FiGithub size={18} />
+      {/* ── TERMINAL LIVE SCAN DEMO ── */}
+      <section className="py-16 px-4 sm:px-6 bg-slate-900/30 border-y border-slate-800/80">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
+          <div className="space-y-4 max-w-xl">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 font-mono">
+              Automated CLI &amp; API
             </span>
-            <span className="hidden min-w-0 sm:block">
-              <span className="block text-sm font-black leading-tight text-text-primary">
-                SynthetixGit
-              </span>
-              <span className="block text-[10px] font-medium leading-tight text-text-muted">
-                README & profile studio
-              </span>
-            </span>
-            <span className="block text-sm font-black leading-tight text-text-primary sm:hidden">
-              S<span className="text-brand-400">G</span>
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-text-tertiary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href={`/studio?user=${DEMO_USER}&mode=profile`}
-              className="hidden grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border-primary bg-bg-tertiary/60 text-text-secondary transition-colors hover:border-border-secondary hover:bg-bg-tertiary hover:text-text-primary sm:grid"
-              title="Open studio"
-            >
-              <FiCode size={15} />
-            </Link>
-            <a
-              href="https://github.com/Dev-Nurul08/SynthetixGit"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border-primary bg-bg-tertiary/60 text-text-secondary transition-colors hover:border-border-secondary hover:bg-bg-tertiary hover:text-text-primary"
-              title="GitHub"
-            >
-              <FiStar size={15} />
-            </a>
-            <Link href={`/studio?user=${DEMO_USER}&mode=profile`}>
-              <Button variant="primary" size="sm" rightIcon={<FiArrowRight size={14} />}>
-                <span className="hidden sm:inline">Launch</span>
-                <FiCommand size={14} className="sm:hidden" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="relative border-t border-border-primary bg-bg-primary/60">
-      <div className={`${container} py-10`}>
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl border border-brand-400/30 bg-brand-500/10 text-brand-200">
-                <FiGithub size={20} />
-              </span>
-              <div>
-                <p className="text-sm font-black text-text-primary">SynthetixGit</p>
-                <p className="text-[11px] text-text-muted">
-                  Developer profile & README studio
-                </p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Instant Generation. One-Click GitHub Sync.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              SynthetixGit connects with your GitHub account, reads your commit history, calculates optimal commit dates, and automatically commits contribution art or creates full profile repos in seconds.
+            </p>
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-300 pt-2">
+              <div className="flex items-center gap-1.5">
+                <FiCheck className="text-emerald-400" />
+                <span>Zero configuration</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <FiCheck className="text-emerald-400" />
+                <span>Safe OAuth tokens</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <FiCheck className="text-emerald-400" />
+                <span>Bash &amp; PS1 scripts</span>
               </div>
             </div>
-            <p className="max-w-sm text-sm leading-relaxed text-text-tertiary">
-              Build stunning profile READMEs, contribution art, project docs, and dynamic
-              widgets without touching an editor tab.
+          </div>
+
+          <TerminalDemo />
+        </div>
+      </section>
+
+      {/* ── PLAYABLE ARCADE TEASER ── */}
+      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="rounded-3xl p-8 sm:p-12 bg-gradient-to-r from-slate-900 via-rose-950/20 to-slate-900 border border-slate-800/80 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-3 max-w-xl">
+            <span className="text-xs font-bold uppercase tracking-widest text-rose-400 font-mono">
+              Arcade Suite
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-white">
+              Make your GitHub profile playable.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Embed playable HTML5 Canvas games (Snake, Brick Breaker, Pac-Man) right on your README. Visitors click "Play" and compete directly on your personal profile leaderboard.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-            <FooterCol
-              title="Studio"
-              links={[
-                { label: "Profile README", href: `/studio?user=${DEMO_USER}&mode=profile` },
-                { label: "Contribution Art", href: `/studio?user=${DEMO_USER}&mode=canvas` },
-                { label: "Project README", href: `/studio?user=${DEMO_USER}&mode=repo` },
-                { label: "Arcade Games", href: `/studio?user=${DEMO_USER}&mode=arcade` },
-              ]}
-            />
-            <FooterCol
-              title="Tools"
-              links={[
-                { label: "SVG Widgets", href: `/studio?user=${DEMO_USER}&mode=widgets` },
-                { label: "Badge Picker", href: `/studio?user=${DEMO_USER}&mode=profile` },
-                { label: "Deploy", href: `/studio?user=${DEMO_USER}&mode=profile` },
-                { label: "Templates", href: "#presets" },
-              ]}
-            />
-            <FooterCol
-              title="Resources"
-              links={[
-                { label: "Architecture", href: "https://github.com/Dev-Nurul08/SynthetixGit/blob/main/docs/ARCHITECTURE.md" },
-                { label: "GitHub", href: "https://github.com/Dev-Nurul08/SynthetixGit" },
-                { label: "Author", href: "https://github.com/Dev-Nurul08" },
-                { label: "Changelog", href: "#audit" },
-              ]}
-            />
-          </div>
-        </div>
-
-        <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-border-primary pt-6 text-xs text-text-muted sm:flex-row sm:items-center">
-          <span>© {new Date().getFullYear()} SynthetixGit — crafted for builders.</span>
-          <span className="flex flex-wrap items-center gap-4">
-            <span className="inline-flex items-center gap-2">
-              <FiShield size={12} className="text-accent-emerald" /> End-to-end type-safe
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <FiTerminal size={12} className="text-brand-300" /> Next 16 App Router
-            </span>
-          </span>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-function FooterCol({
-  title,
-  links,
-}: {
-  title: string;
-  links: { label: string; href: string }[];
-}) {
-  return (
-    <div>
-      <h4 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-        {title}
-      </h4>
-      <ul className="mt-3 space-y-2">
-        {links.map((link) => (
-          <li key={link.label}>
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
             <a
-              href={link.href}
-              target={link.href.startsWith("http") ? "_blank" : undefined}
-              rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="text-sm text-text-tertiary transition-colors hover:text-text-primary"
+              href="/games"
+              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black text-xs shadow-lg shadow-rose-500/20 hover:opacity-90 transition-all flex items-center gap-2"
             >
-              {link.label}
+              <FiPlay size={16} />
+              Launch Arcade Games
             </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function WorkspacePreview({
-  activeFeature,
-  setActiveFeature,
-}: {
-  activeFeature: StudioMode;
-  setActiveFeature: (m: StudioMode) => void;
-}) {
-  const active =
-    featureLaunchers.find((f) => f.id === activeFeature) ?? featureLaunchers[0];
-  const ActiveIcon = active.icon;
-  return (
-    <Card className="!p-0 overflow-hidden shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)]">
-      <div className="flex items-center justify-between border-b border-border-primary bg-bg-tertiary/40 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-accent-rose/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-accent-amber/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-accent-emerald/70" />
-          </span>
-          <span className="ml-3 text-xs font-bold text-text-secondary">
-            synthetix.app/studio
-          </span>
-        </div>
-        <Badge tone={active.tone}>{active.label}</Badge>
-      </div>
-
-      <div className="grid gap-0 lg:grid-cols-[180px_minmax(0,1fr)]">
-        <div className="border-b border-border-primary bg-bg-secondary/40 p-3 lg:border-b-0 lg:border-r lg:border-border-primary">
-          <div className="flex gap-1 lg:flex-col">
-            {featureLaunchers.map((feature) => {
-              const Icon = feature.icon;
-              const selected = feature.id === activeFeature;
-              return (
-                <button
-                  key={feature.id}
-                  type="button"
-                  onClick={() => setActiveFeature(feature.id)}
-                  className={[
-                    "flex flex-1 items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs font-bold transition-all duration-200 lg:w-full",
-                    selected
-                      ? "border-brand-400/30 bg-brand-500/10 text-brand-200 shadow-[0_0_0_1px_rgba(34,211,238,0.2)]"
-                      : "border-transparent bg-transparent text-text-muted hover:bg-white/[0.04] hover:text-text-secondary",
-                  ].join(" ")}
-                >
-                  <Icon size={14} />
-                  <span className="hidden xl:inline">{feature.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <IconTile icon={<ActiveIcon size={16} />} tone={active.tone} size="sm" />
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                  {active.label} Surface
-                </p>
-              </div>
-              <h2 className="mt-2 text-xl font-black text-text-primary">{active.title}</h2>
-              <p className="mt-1 text-xs leading-relaxed text-text-tertiary line-clamp-2">
-                {active.summary}
-              </p>
-            </div>
-            <Link
-              href={active.href}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border-primary bg-bg-tertiary/60 text-text-secondary transition-colors hover:border-border-secondary hover:bg-bg-tertiary hover:text-text-primary"
-              title={`Open ${active.title}`}
+            <a
+              href="/studio?mode=arcade"
+              className="px-5 py-3.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold text-xs hover:bg-slate-800 transition-all"
             >
-              <FiExternalLink size={14} />
-            </Link>
-          </div>
-
-          <div className="mt-4">
-            {activeFeature === "canvas" ? (
-              <ContributionGraphPreview />
-            ) : (
-              <ReadmePreviewPanel />
-            )}
-          </div>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {benchmarkCards.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.label}
-                  className="rounded-xl border border-border-primary bg-bg-tertiary/40 p-3"
-                >
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-tertiary">
-                    <Icon size={12} /> {item.label}
-                  </div>
-                  <p className="mt-1.5 text-xs font-black text-text-primary">{item.value}</p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-text-muted line-clamp-2">
-                    {item.detail}
-                  </p>
-                </div>
-              );
-            })}
+              Get README Embed Code
+            </a>
           </div>
         </div>
-      </div>
-    </Card>
-  );
-}
+      </section>
 
-function ReadmePreviewPanel() {
-  return (
-    <div className="overflow-hidden rounded-xl border border-border-primary bg-bg-tertiary/40">
-      <div className="flex items-center justify-between border-b border-border-primary px-3 py-2">
-        <span className="flex items-center gap-2 text-[11px] font-bold text-text-secondary">
-          <FiBookOpen size={13} className="text-brand-300" /> README.md
-        </span>
-        <span className="rounded-md bg-accent-emerald-soft px-2 py-0.5 text-[10px] font-bold text-accent-emerald">
-          Live preview
-        </span>
-      </div>
-      <div className="space-y-2.5 p-4">
-        <div className="h-7 w-3/4 rounded-md bg-white/[0.08] shimmer" />
-        <div className="h-2 w-full rounded bg-white/[0.07]" />
-        <div className="h-2 w-5/6 rounded bg-white/[0.05]" />
-        <div className="grid gap-2 pt-2 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-16 rounded-lg border border-border-primary bg-white/[0.04] shimmer"
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-10 gap-1 pt-2">
-          {Array.from({ length: 50 }).map((_, i) => (
-            <span
-              key={i}
-              className={[
-                "h-4 rounded-sm",
-                i % 5 === 0
-                  ? "bg-white/[0.08]"
-                  : i % 3 === 0
-                    ? "bg-white/[0.06]"
-                    : "bg-white/[0.04]",
-              ].join(" ")}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+      {/* ── FINAL CTA ── */}
+      <section className="py-24 px-4 sm:px-6 text-center space-y-6 max-w-4xl mx-auto">
+        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+          Ready to transform your{" "}
+          <span className="bg-gradient-to-r from-cyan-400 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            GitHub presence?
+          </span>
+        </h2>
+        <p className="text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
+          Join developers worldwide creating high-impact GitHub profiles and calendar art today.
+        </p>
 
-function ContributionGraphPreview() {
-  return (
-    <div className="overflow-hidden rounded-xl border border-border-primary bg-bg-tertiary/40 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-bold text-text-secondary">
-          52 × 7 Contribution Canvas
-        </span>
-        <span className="rounded-md bg-accent-emerald-soft px-2 py-0.5 text-[10px] font-bold text-accent-emerald">
-          Script export
-        </span>
-      </div>
-      <div className="overflow-x-auto no-scrollbar">
-        <div className="grid min-w-[580px] grid-flow-col grid-rows-7 gap-[3px]">
-          {Array.from({ length: 52 }).map((_, col) =>
-            Array.from({ length: 7 }).map((__, row) => {
-              const active =
-                (col > 5 && col < 16 && (row === 1 || row === 5 || col === 6 || col === 15)) ||
-                (col > 22 && col < 33 && (row === 0 || row === 3 || row === 6)) ||
-                (col > 38 && col < 48 && row === Math.abs((col % 7) - 3));
-              return (
-                <span
-                  key={`${col}-${row}`}
-                  className={[
-                    "h-2.5 w-2.5 rounded-[2px]",
-                    active
-                      ? "bg-accent-emerald shadow-[0_0_6px_rgba(52,211,153,0.5)]"
-                      : "bg-white/[0.05]",
-                  ].join(" ")}
-                />
-              );
-            })
-          )}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
+          <button
+            type="button"
+            onClick={() => signIn("github")}
+            className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/20 hover:scale-[1.02] transition-all cursor-pointer"
+          >
+            <FiGithub size={18} />
+            Get Started with GitHub
+          </button>
+          <a
+            href="https://github.com/Dev-Nurul08/SynthetixGit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-6 py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold text-sm hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+          >
+            <FiStar size={16} className="text-amber-400" />
+            Star Repository on GitHub
+          </a>
         </div>
-      </div>
+      </section>
+
+      {/* ── FOOTER ATTRIBUTION ── */}
+      <footer className="border-t border-slate-800/80 py-10 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center">
+              <FiGithub size={14} className="text-slate-950 font-black" />
+            </div>
+            <span className="font-bold text-white">SynthetixGit</span>
+            <span>·</span>
+            <span>
+              Architecture by{" "}
+              <a
+                href="https://github.com/Dev-Shivam-05"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-slate-200 hover:text-emerald-400 transition-colors"
+              >
+                Dev-Shivam-05
+              </a>{" "}
+              &amp;{" "}
+              <a
+                href="https://github.com/Dev-Nurul08"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-slate-200 hover:text-cyan-400 transition-colors"
+              >
+                Dev-Nurul08
+              </a>
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-5">
+            <a
+              href="https://www.linkedin.com/in/shivam-bhadoriya-dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:text-white transition-colors"
+            >
+              <FiLinkedin className="w-3.5 h-3.5 text-blue-400" />
+              Shivam Bhadoriya
+            </a>
+            <a href="/studio" className="hover:text-white transition-colors">
+              Studio
+            </a>
+            <a href="/art-generator" className="hover:text-emerald-400 transition-colors">
+              Art Forge
+            </a>
+            <a href="/games" className="hover:text-rose-400 transition-colors">
+              Arcade
+            </a>
+            <a href="/contact" className="hover:text-white transition-colors">
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

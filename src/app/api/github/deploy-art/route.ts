@@ -61,12 +61,13 @@ export async function POST(request: NextRequest) {
       startDate.setUTCDate(startDate.getUTCDate() + 1);
     }
 
-    // Fetch default branch ref (main)
+    let targetBranchRef = 'heads/main';
     const refData = await octokit.git.getRef({
       owner: username,
       repo: repoName,
       ref: 'heads/main',
     }).catch(async () => {
+      targetBranchRef = 'heads/master';
       return await octokit.git.getRef({
         owner: username,
         repo: repoName,
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
     await octokit.git.updateRef({
       owner: username,
       repo: repoName,
-      ref: 'heads/main',
+      ref: targetBranchRef,
       sha: currentCommitSha,
       force: true,
     });
