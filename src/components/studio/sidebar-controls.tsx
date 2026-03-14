@@ -52,21 +52,21 @@ type TabKey =
   | 'widgets';
 
 export const ALL_15_TEMPLATES: { id: TemplateId; name: string; desc: string; icon: string }[] = [
-  { id: 'beast-mode-neon', name: 'Beast Mode Neon', desc: 'Capsule venom banner, glowing stats & SkillIcons matrix', icon: '🔥' },
-  { id: 'cyberpunk-glitch', name: 'Cyberpunk Glitch', desc: 'Glitch banner, neon matrices, high-intensity graph', icon: '👾' },
+  { id: 'beast-mode-neon', name: 'Beast Mode Pro', desc: 'Capsule venom banner, glowing stats & SkillIcons matrix', icon: '🔥' },
+  { id: 'cyberpunk-glitch', name: 'Cyberpunk Glitch', desc: 'Glitch banner, edge-lit matrices, high-intensity graph', icon: '👾' },
   { id: 'dracula-dark', name: 'Dracula Dark', desc: 'Classic Dracula purple/pink gradients & dark cards', icon: '🧛' },
   { id: 'nord-frost', name: 'Nord Frost', desc: 'Nordic icy blue/grey minimalism & crisp typography', icon: '❄️' },
   { id: 'minimal-monochrome', name: 'Minimal Monochrome', desc: 'Black/white ultra-sleek, clean sans typography', icon: '🎯' },
   { id: 'retro-terminal', name: 'Retro Terminal', desc: '8-bit ASCII prompts & green phosphor CRT style', icon: '📟' },
   { id: 'sunset-gradient', name: 'Sunset Gradient', desc: 'Warm orange/pink/purple capsule waves & vibrant badges', icon: '🌅' },
   { id: 'glassmorphism', name: 'Glassmorphism', desc: 'Frosted backdrop cards, blur borders & translucent pills', icon: '💎' },
-  { id: 'tokyo-night', name: 'Tokyo Night', desc: 'Deep indigo/cyan aesthetic & neon glow charts', icon: '🌃' },
+  { id: 'tokyo-night', name: 'Tokyo Night', desc: 'Deep indigo/cyan aesthetic & subtle accent charts', icon: '🌃' },
   { id: 'catppuccin-mocha', name: 'Catppuccin Mocha', desc: 'Pastel lavender/peach/mauve cozy developer palette', icon: '☕' },
   { id: 'solarized-dark', name: 'Solarized Dark', desc: 'Teal/amber balance & terminal-inspired syntax', icon: '☀️' },
   { id: 'matrix-green', name: 'Matrix Green', desc: 'Digital rain vibes, phosphor green glow & hacking stats', icon: '🟩' },
   { id: 'clean-corporate', name: 'Clean Corporate', desc: 'Lead architect enterprise layout with verified metrics', icon: '💼' },
   { id: 'acid-tech', name: 'Acid Tech', desc: 'High-voltage lime & electric purple cyber aesthetic', icon: '⚡' },
-  { id: 'synthwave-84', name: 'Synthwave 84', desc: 'Outrun retro grid, neon sunset & 80s chrome badges', icon: '🌴' },
+  { id: 'synthwave-84', name: 'Synthwave 84', desc: 'Outrun retro grid, retro sunset & 80s chrome badges', icon: '🌴' },
 ];
 
 export function SidebarControls({
@@ -100,9 +100,9 @@ export function SidebarControls({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-slate-100">
+    <div className="flex flex-col h-full bg-bg-primary text-text-primary">
       {/* ── Sub-Navigation Tabs ── */}
-      <div className="px-3 pt-3 border-b border-slate-800 bg-slate-950 flex items-center gap-1 overflow-x-auto no-scrollbar">
+      <div className="px-3 pt-3 border-b border-border-primary bg-bg-canvas flex items-center gap-1 overflow-x-auto no-scrollbar">
         {navTabs.map((tab) => (
           <button
             key={tab.id}
@@ -110,8 +110,8 @@ export function SidebarControls({
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg text-xs font-bold transition-all border-t border-x cursor-pointer whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-slate-900 border-slate-800 border-b-slate-900 text-blue-400 shadow-sm'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                ? 'bg-bg-primary border-border-primary border-b-bg-primary text-brand-400 shadow-sm'
+                : 'border-transparent text-text-tertiary hover:text-text-primary hover:bg-bg-primary/50'
             }`}
           >
             {tab.icon}
@@ -126,11 +126,11 @@ export function SidebarControls({
         {activeTab === 'templates' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
                 <FiZap className="text-amber-400" size={14} />
                 <span>15 Built-in Profile Presets</span>
               </span>
-              <span className="text-[11px] text-blue-400 font-semibold">1-Click Apply</span>
+              <span className="text-[11px] text-brand-400 font-semibold">1-Click Apply</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto pr-1">
@@ -141,18 +141,18 @@ export function SidebarControls({
                   onClick={() => onTemplateChange(t.id)}
                   className={`p-3 rounded-xl text-left transition-all border cursor-pointer ${
                     templateId === t.id
-                      ? 'bg-blue-600/15 border-blue-500 text-white shadow-md'
-                      : 'bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-300'
+                      ? 'bg-brand-500/15 border-brand-500 text-white shadow-md'
+                      : 'bg-bg-canvas/80 hover:bg-bg-secondary/80 border-border-primary text-text-secondary'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xl">{t.icon}</span>
                     {templateId === t.id && (
-                      <span className="p-1 rounded-full bg-blue-500 text-white"><FiCheck size={10} /></span>
+                      <span className="p-1 rounded-full bg-brand-500 text-slate-950"><FiCheck size={10} /></span>
                     )}
                   </div>
                   <div className="text-xs font-bold mt-1.5 text-white truncate">{t.name}</div>
-                  <div className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">{t.desc}</div>
+                  <div className="text-[10px] text-text-tertiary line-clamp-2 mt-0.5 leading-tight">{t.desc}</div>
                 </button>
               ))}
             </div>
@@ -173,17 +173,17 @@ export function SidebarControls({
         {/* ── TAB 1B: CANVAS PAINTER ── */}
         {activeTab === 'canvas' && (
           <div className="space-y-4">
-            <CanvasPainter username="Dev-Nurul08" />
+            <CanvasPainter username="" />
           </div>
         )}
 
         {/* ── TAB 2: HEADER BANNER & DIVIDERS ── */}
         {activeTab === 'header' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Enable Header Banner</span>
-                <span className="text-[11px] text-slate-400">Venom capsule banner & typing text</span>
+                <span className="text-[11px] text-text-tertiary">Venom capsule banner & typing text</span>
               </div>
               <ToggleSwitch
                 enabled={modules.headerBanner.enabled}
@@ -193,11 +193,11 @@ export function SidebarControls({
             </div>
 
             {/* Section Divider Engine (Phase 6) */}
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-white block">Animated SVG Dividers</span>
-                  <span className="text-[11px] text-slate-400">Replace static lines with flowing SVG animations</span>
+                  <span className="text-[11px] text-text-tertiary">Replace static lines with flowing SVG animations</span>
                 </div>
                 <ToggleSwitch
                   enabled={modules.sectionDivider?.enabled ?? true}
@@ -208,10 +208,10 @@ export function SidebarControls({
 
               {(modules.sectionDivider?.enabled ?? true) && (
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Divider Animation Style</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1.5">Divider Animation Style</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { id: 'rainbow-gradient', label: 'Rainbow Flow 🌈' },
+                      { id: 'rainbow-gradient', label: 'Soft Wave 🌊' },
                       { id: 'snake-crawl', label: 'Snake Crawl 🐍' },
                       { id: 'neon-laser-shimmer', label: 'Laser Node ⚡' },
                       { id: 'soundwave-eq', label: 'Soundwave EQ 🎵' },
@@ -226,8 +226,8 @@ export function SidebarControls({
                         onClick={() => onUpdateModule('sectionDivider', { style: d.id as any })}
                         className={`py-2 px-2.5 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
                           modules.sectionDivider?.style === d.id
-                            ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                            ? 'bg-brand-500/20 border-brand-500 text-brand-300'
+                            : 'bg-bg-canvas border-border-primary text-text-tertiary hover:text-text-primary'
                         }`}
                       >
                         {d.label}
@@ -241,7 +241,7 @@ export function SidebarControls({
             {modules.headerBanner.enabled && (
               <div className="space-y-3.5">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Banner Style</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1.5">Banner Style</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {[
                       { id: 'venom-capsule', label: 'Venom Capsule 🔥' },
@@ -258,8 +258,8 @@ export function SidebarControls({
                         onClick={() => onUpdateModule('headerBanner', { headerStyle: style.id as any })}
                         className={`py-2 px-2.5 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
                           modules.headerBanner.headerStyle === style.id
-                            ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                            ? 'bg-brand-500/20 border-brand-500 text-brand-300'
+                            : 'bg-bg-canvas border-border-primary text-text-tertiary hover:text-text-primary'
                         }`}
                       >
                         {style.label}
@@ -269,29 +269,29 @@ export function SidebarControls({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Headline Title</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">Headline Title</label>
                   <input
                     type="text"
                     value={modules.headerBanner.title}
                     onChange={(e) => onUpdateModule('headerBanner', { title: e.target.value })}
                     placeholder="Full Name or Handle..."
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Subtitle / Role Tagline</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">Subtitle / Role Tagline</label>
                   <input
                     type="text"
                     value={modules.headerBanner.subtitle}
                     onChange={(e) => onUpdateModule('headerBanner', { subtitle: e.target.value })}
                     placeholder="e.g. Full-Stack & MERN Developer"
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-text-secondary block mb-1">
                     Multi-line Typing SVG Phrases (semicolon-separated)
                   </label>
                   <textarea
@@ -299,7 +299,7 @@ export function SidebarControls({
                     value={modules.headerBanner.typingLines.join(';')}
                     onChange={(e) => onUpdateModule('headerBanner', { typingLines: e.target.value.split(';').filter(Boolean) })}
                     placeholder="Frontend Ninja ⚡;Backend Explorer 🔍"
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white font-mono outline-none focus:border-brand-400"
                   />
                 </div>
               </div>
@@ -310,10 +310,10 @@ export function SidebarControls({
         {/* ── TAB 3: BEAST MODE STATS DASHBOARD ── */}
         {activeTab === 'beast' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Beast Mode Stats Dashboard</span>
-                <span className="text-[11px] text-slate-400">Live multi-column gradient matrix table</span>
+                <span className="text-[11px] text-text-tertiary">Live multi-column gradient matrix table</span>
               </div>
               <ToggleSwitch
                 enabled={modules.beastModeDashboard.enabled}
@@ -373,10 +373,10 @@ export function SidebarControls({
               showNextAchievements={modules.githubAnalytics.showNextAchievements}
               onUpdate={(data) => onUpdateModule('githubAnalytics', data)}
             />
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">GitHub Performance Cards</span>
-                <span className="text-[11px] text-slate-400">Profile summary cards, language charts, trophies</span>
+                <span className="text-[11px] text-text-tertiary">Profile summary cards, language charts, trophies</span>
               </div>
               <ToggleSwitch
                 enabled={modules.githubAnalytics.enabled}
@@ -431,10 +431,10 @@ export function SidebarControls({
         {/* ── TAB 5: EDUCATION & SKILL PROFICIENCY ── */}
         {activeTab === 'education' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Education & Skills Journey</span>
-                <span className="text-[11px] text-slate-400">Academic path, SkillIcons grid, LeetCode card</span>
+                <span className="text-[11px] text-text-tertiary">Academic path, SkillIcons grid, LeetCode card</span>
               </div>
               <ToggleSwitch
                 enabled={modules.educationAndSkills.enabled}
@@ -446,28 +446,28 @@ export function SidebarControls({
             {modules.educationAndSkills.enabled && (
               <div className="space-y-3.5">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">University / Institute Badge</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">University / Institute Badge</label>
                   <input
                     type="text"
                     value={modules.educationAndSkills.institutionName}
                     onChange={(e) => onUpdateModule('educationAndSkills', { institutionName: e.target.value })}
                     placeholder="VidhyaDeep_University"
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">LeetCode Username</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">LeetCode Username</label>
                   <input
                     type="text"
                     value={modules.educationAndSkills.leetCodeUsername || ''}
                     onChange={(e) => onUpdateModule('educationAndSkills', { leetCodeUsername: e.target.value })}
-                    placeholder="Fr_Nurul"
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    placeholder="your-leetcode-handle"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
 
-                <div className="pt-2 border-t border-slate-800 space-y-2">
+                <div className="pt-2 border-t border-border-primary space-y-2">
                   <ToggleSwitch
                     enabled={modules.educationAndSkills.showTopLangsPie}
                     onToggle={(v) => onUpdateModule('educationAndSkills', { showTopLangsPie: v })}
@@ -489,10 +489,10 @@ export function SidebarControls({
         {/* ── TAB 6: TECHNOLOGY ARSENAL ── */}
         {activeTab === 'arsenal' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Technology Arsenal Grid</span>
-                <span className="text-[11px] text-slate-400">High-res icons with skill level pills</span>
+                <span className="text-[11px] text-text-tertiary">High-res icons with skill level pills</span>
               </div>
               <ToggleSwitch
                 enabled={modules.techArsenal.enabled}
@@ -517,10 +517,10 @@ export function SidebarControls({
         {/* ── TAB 7: ABOUT ME ── */}
         {activeTab === 'about' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">About Me & Facts</span>
-                <span className="text-[11px] text-slate-400">Developer bio & structured bullet facts</span>
+                <span className="text-[11px] text-text-tertiary">Developer bio & structured bullet facts</span>
               </div>
               <ToggleSwitch
                 enabled={modules.aboutMe.enabled}
@@ -532,17 +532,17 @@ export function SidebarControls({
             {modules.aboutMe.enabled && (
               <div className="space-y-3.5">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Bio Summary</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">Bio Summary</label>
                   <textarea
                     rows={3}
                     value={modules.aboutMe.bioText}
                     onChange={(e) => onUpdateModule('aboutMe', { bioText: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500 resize-y"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400 resize-y"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-slate-300 block">Developer Fact Bullets</span>
+                  <span className="text-xs font-bold text-text-secondary block">Developer Fact Bullets</span>
                   <input
                     type="text"
                     value={modules.aboutMe.quickFacts.currentWork}
@@ -550,7 +550,7 @@ export function SidebarControls({
                       quickFacts: { ...modules.aboutMe.quickFacts, currentWork: e.target.value }
                     })}
                     placeholder="🔭 Working on..."
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                   <input
                     type="text"
@@ -559,7 +559,7 @@ export function SidebarControls({
                       quickFacts: { ...modules.aboutMe.quickFacts, learning: e.target.value }
                     })}
                     placeholder="🌱 Learning..."
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                   <input
                     type="text"
@@ -568,7 +568,7 @@ export function SidebarControls({
                       quickFacts: { ...modules.aboutMe.quickFacts, askMe: e.target.value }
                     })}
                     placeholder="💬 Ask me about..."
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
               </div>
@@ -579,10 +579,10 @@ export function SidebarControls({
         {/* ── TAB 8: GAMES & MEDIA ── */}
         {activeTab === 'games' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Break-Out & Snake Game</span>
-                <span className="text-[11px] text-slate-400">Animated commit history game banner</span>
+                <span className="text-[11px] text-text-tertiary">Animated commit history game banner</span>
               </div>
               <ToggleSwitch
                 enabled={modules.gameSuite.enabled}
@@ -594,7 +594,7 @@ export function SidebarControls({
             {modules.gameSuite.enabled && (
               <div className="space-y-3 pt-1">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Select Interactive Game</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1.5">Select Interactive Game</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'snake', label: 'Snake 🐍' },
@@ -607,8 +607,8 @@ export function SidebarControls({
                         onClick={() => onUpdateModule('gameSuite', { gameType: g.id as any })}
                         className={`py-2 px-2 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer ${
                           modules.gameSuite.gameType === g.id
-                            ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                            ? 'bg-brand-500/20 border-brand-500 text-brand-300'
+                            : 'bg-bg-canvas border-border-primary text-text-tertiary hover:text-text-primary'
                         }`}
                       >
                         {g.label}
@@ -618,13 +618,13 @@ export function SidebarControls({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Banner Motto Quote</label>
+                  <label className="text-xs font-bold text-text-secondary block mb-1">Banner Motto Quote</label>
                   <input
                     type="text"
                     value={modules.gameSuite.motto}
                     onChange={(e) => onUpdateModule('gameSuite', { motto: e.target.value })}
                     placeholder="Code. Commit. Conquer."
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                   />
                 </div>
               </div>
@@ -635,10 +635,10 @@ export function SidebarControls({
         {/* ── TAB 9: SOCIAL & CONNECT ── */}
         {activeTab === 'social' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary">
               <div>
                 <span className="text-xs font-bold text-white block">Socials & Connect Matrix</span>
-                <span className="text-[11px] text-slate-400">Shields.io badges & meeting links</span>
+                <span className="text-[11px] text-text-tertiary">Shields.io badges & meeting links</span>
               </div>
               <ToggleSwitch
                 enabled={modules.socialLinks.enabled}
@@ -654,35 +654,35 @@ export function SidebarControls({
                   value={modules.socialLinks.github}
                   onChange={(e) => onUpdateModule('socialLinks', { github: e.target.value })}
                   placeholder="GitHub Username"
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                 />
                 <input
                   type="text"
                   value={modules.socialLinks.linkedin}
                   onChange={(e) => onUpdateModule('socialLinks', { linkedin: e.target.value })}
                   placeholder="LinkedIn Profile Handle"
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                 />
                 <input
                   type="text"
                   value={modules.socialLinks.email}
                   onChange={(e) => onUpdateModule('socialLinks', { email: e.target.value })}
                   placeholder="Email Address"
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                 />
                 <input
                   type="text"
                   value={modules.socialLinks.behance}
                   onChange={(e) => onUpdateModule('socialLinks', { behance: e.target.value })}
                   placeholder="Behance Handle"
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                 />
                 <input
                   type="text"
                   value={modules.socialLinks.instagram}
                   onChange={(e) => onUpdateModule('socialLinks', { instagram: e.target.value })}
                   placeholder="Instagram Handle"
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-bg-canvas border border-border-primary text-xs text-white outline-none focus:border-brand-400"
                 />
               </div>
             )}
@@ -692,7 +692,7 @@ export function SidebarControls({
         {/* ── TAB 10: INTERACTIVE WIDGETS & FOOTER ── */}
         {activeTab === 'widgets' && (
           <div className="space-y-4">
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div className="p-3.5 rounded-xl bg-bg-canvas/80 border border-border-primary space-y-2">
               <ToggleSwitch
                 enabled={modules.interactiveWidgets.showSpotify ?? false}
                 onToggle={(v) => onUpdateModule('interactiveWidgets', { showSpotify: v })}
