@@ -26,16 +26,12 @@ import {
   FiShare2,
   FiLayers,
   FiStar,
+  FiBox,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useEditorStore } from '@/stores/editor-store';
 import { BADGE_DATABASE } from '@/lib/badge-registry';
 import { MarkdownPreview } from './markdown-preview';
-
-function getBadgeLabel(slug: string): string {
-  const item = BADGE_DATABASE.find((b) => b.id === slug || b.logo === slug);
-  return item ? item.name : slug;
-}
 
 interface ReadmeWizardProps {
   username: string;
@@ -45,9 +41,9 @@ interface ReadmeWizardProps {
 
 const WIZARD_STEPS = [
   { id: 1, name: '1. Basic Identity', icon: FiUser, desc: 'Name, subtitle & location' },
-  { id: 2, name: '2. Header & Typing SVG', icon: FiTerminal, desc: 'Header banner & typing animation' },
-  { id: 3, name: '3. About Me Matrix', icon: FiBriefcase, desc: 'Current role, learning & fun facts' },
-  { id: 4, name: '4. Featured Projects', icon: FiStar, desc: 'Showcase top repositories & links' },
+  { id: 2, name: '2. Header & Typing SVG', icon: FiTerminal, desc: 'Header banner style & typing lines' },
+  { id: 3, name: '3. About Me Matrix', icon: FiBriefcase, desc: 'Role, learning goals & quick facts' },
+  { id: 4, name: '4. Featured Projects', icon: FiStar, desc: 'Showcase top repositories & star counts' },
   { id: 5, name: '5. Frontend Stack', icon: FiCode, desc: 'React, Next.js, Vue, Tailwind, etc.' },
   { id: 6, name: '6. Backend & APIs', icon: FiCpu, desc: 'Node.js, Python, Go, Rust, Java' },
   { id: 7, name: '7. Databases & Storage', icon: FiDatabase, desc: 'PostgreSQL, Mongo, Redis, Supabase' },
@@ -55,12 +51,12 @@ const WIZARD_STEPS = [
   { id: 9, name: '9. Mobile & Cross-Platform', icon: FiSmartphone, desc: 'React Native, Flutter, Swift, Kotlin' },
   { id: 10, name: '10. AI, ML & Data Science', icon: FiCpu, desc: 'PyTorch, TensorFlow, OpenCV, Pandas' },
   { id: 11, name: '11. GitHub Analytics', icon: FiBarChart2, desc: 'Stats, Streak, Languages & Views' },
-  { id: 12, name: '12. GitHub Trophies', icon: FiAward, desc: 'Showcase rank trophies & badges' },
+  { id: 12, name: '12. GitHub Trophies', icon: FiAward, desc: 'Showcase rank trophies & secret badges' },
   { id: 13, name: '13. Platform Metrics', icon: FiZap, desc: 'LeetCode, WakaTime & Spotify' },
   { id: 14, name: '14. Social & Contact', icon: FiShare2, desc: 'LinkedIn, Twitter/X, Email, Discord' },
   { id: 15, name: '15. Dividers & Themes', icon: FiGrid, desc: 'Pick divider styles & color theme' },
   { id: 16, name: '16. Arcade Mini-Games', icon: FiPlay, desc: 'Embed Snake, Brick Breaker & Pac-Man' },
-  { id: 17, name: '17. Custom Footer', icon: FiLayers, desc: 'Closing statement & back to top' },
+  { id: 17, name: '17. Custom Footer', icon: FiLayers, desc: 'Closing statement & status badge' },
   { id: 18, name: '18. Review & Export', icon: FiCheckCircle, desc: 'Preview & download README' },
 ];
 
@@ -80,11 +76,19 @@ const DIVIDER_STYLES = [
   { id: 'subtle-border', name: 'Dotted Border', icon: '💬' },
 ];
 
+function getBadgeLabel(slug: string): string {
+  const item = BADGE_DATABASE.find((b) => b.id === slug || b.logo === slug);
+  return item ? item.name : slug;
+}
+
 export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: ReadmeWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const { modules, updateModule, addBadge, removeBadge, markdown, regenerateMarkdown, theme, setTheme } = useEditorStore();
 
   const [typingInput, setTypingInput] = useState('');
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDesc, setNewProjectDesc] = useState('');
+  const [newProjectUrl, setNewProjectUrl] = useState('');
 
   const handleNext = () => {
     regenerateMarkdown(username);
@@ -131,6 +135,35 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
     regenerateMarkdown(username);
   };
 
+  const handleAddProject = () => {
+    if (!newProjectName.trim()) return;
+    const currentRepos = modules.featuredRepos?.repos || [];
+    updateModule('featuredRepos', {
+      enabled: true,
+      repos: [
+        ...currentRepos,
+        {
+          name: newProjectName.trim(),
+          description: newProjectDesc.trim() || 'Awesome project',
+          url: newProjectUrl.trim() || `https://github.com/${username}/${newProjectName.trim()}`,
+          stargazerCount: 12,
+          primaryLanguage: { name: 'TypeScript', color: '#3178c6' },
+        },
+      ],
+    });
+    setNewProjectName('');
+    setNewProjectDesc('');
+    setNewProjectUrl('');
+    toast.success('Featured project added!');
+  };
+
+  const handleRemoveProject = (index: number) => {
+    const currentRepos = modules.featuredRepos?.repos || [];
+    updateModule('featuredRepos', {
+      repos: currentRepos.filter((_, i) => i !== index),
+    });
+  };
+
   const handleCopyMarkdown = () => {
     navigator.clipboard.writeText(markdown);
     toast.success('README Markdown copied to clipboard!');
@@ -154,7 +187,7 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
-      {/* Wizard Progress Header */}
+      {/* Wizard Header Bar */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -202,7 +235,7 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
 
       <hr className="border-slate-800" />
 
-      {/* Step Body */}
+      {/* Step Body Container */}
       <div className="min-h-[400px]">
         {/* STEP 1: BASIC IDENTITY */}
         {currentStep === 1 && (
@@ -229,6 +262,28 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
                 />
               </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1.5">Location / Base</label>
+                <input
+                  type="text"
+                  value={modules.aboutMe?.bioText || ''}
+                  onChange={(e) => updateModule('aboutMe', { bioText: e.target.value })}
+                  placeholder="e.g. San Francisco, CA 🌉"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1.5">Contact Email</label>
+                <input
+                  type="email"
+                  value={modules.beastModeDashboard?.email || ''}
+                  onChange={(e) => updateModule('beastModeDashboard', { email: e.target.value })}
+                  placeholder="e.g. alex@example.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -236,6 +291,34 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
         {/* STEP 2: HEADER & TYPING SVG */}
         {currentStep === 2 && (
           <div className="space-y-5 animate-in fade-in duration-200">
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-2">Header Banner Style</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  { id: 'venom-capsule', name: 'Venom Capsule', desc: 'Sleek animated capsule header' },
+                  { id: 'waving-capsule', name: 'Waving Wave', desc: 'Smooth wave banner effect' },
+                  { id: 'cyberpunk-glitch', name: 'Glitch Cyber', desc: 'Futuristic geometric sliced style' },
+                  { id: 'terminal-prompt', name: 'Terminal Shell', desc: 'Command prompt CLI header' },
+                  { id: 'handwritten-script', name: 'Handwritten', desc: 'Elegant signature script' },
+                  { id: 'minimal', name: 'Minimal Text', desc: 'Clean standard H1 title' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => updateModule('headerBanner', { headerStyle: st.id as any })}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      modules.headerBanner?.headerStyle === st.id
+                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-white mb-0.5">{st.name}</div>
+                    <div className="text-[10px] text-slate-400">{st.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1.5">Typing Animation Lines</label>
               <div className="flex gap-2 mb-2">
@@ -257,7 +340,7 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                 </button>
               </div>
 
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              <div className="space-y-1.5 max-h-36 overflow-y-auto">
                 {(modules.headerBanner?.typingLines || []).map((line, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-xs text-slate-300">
                     <span className="font-mono">{line}</span>
@@ -280,13 +363,13 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Current Work / Role</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">🔭 Current Work / Project</label>
                 <input
                   type="text"
                   value={modules.aboutMe?.quickFacts?.currentWork || ''}
                   onChange={(e) =>
                     updateModule('aboutMe', {
-                      quickFacts: { ...modules.aboutMe?.quickFacts, currentWork: e.target.value },
+                      quickFacts: { ...modules.aboutMe?.quickFacts, currentWork: e.target.value } as any,
                     })
                   }
                   placeholder="e.g. Building microservices at Acme Corp"
@@ -294,19 +377,108 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Currently Learning</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">🌱 Currently Learning</label>
                 <input
                   type="text"
                   value={modules.aboutMe?.quickFacts?.learning || ''}
                   onChange={(e) =>
                     updateModule('aboutMe', {
-                      quickFacts: { ...modules.aboutMe?.quickFacts, learning: e.target.value },
+                      quickFacts: { ...modules.aboutMe?.quickFacts, learning: e.target.value } as any,
                     })
                   }
                   placeholder="e.g. Distributed Systems & Rust"
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
                 />
               </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">👯 Looking to Collaborate On</label>
+                <input
+                  type="text"
+                  value={modules.aboutMe?.quickFacts?.collaborate || ''}
+                  onChange={(e) =>
+                    updateModule('aboutMe', {
+                      quickFacts: { ...modules.aboutMe?.quickFacts, collaborate: e.target.value } as any,
+                    })
+                  }
+                  placeholder="e.g. Open source developer tooling"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">⚡ Fun Fact</label>
+                <input
+                  type="text"
+                  value={modules.aboutMe?.quickFacts?.funFact || ''}
+                  onChange={(e) =>
+                    updateModule('aboutMe', {
+                      quickFacts: { ...modules.aboutMe?.quickFacts, funFact: e.target.value } as any,
+                    })
+                  }
+                  placeholder="e.g. I have brewed over 500 cups of espresso"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: FEATURED PROJECTS */}
+        {currentStep === 4 && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <FiPlus className="text-blue-400" />
+                <span>Add Featured Project / Repository</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder="Project Name (e.g. SynthetixGit)"
+                  className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  value={newProjectDesc}
+                  onChange={(e) => setNewProjectDesc(e.target.value)}
+                  placeholder="Description"
+                  className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  value={newProjectUrl}
+                  onChange={(e) => setNewProjectUrl(e.target.value)}
+                  placeholder="GitHub URL"
+                  className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddProject}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <FiPlus size={14} />
+                <span>Add Project to Showcase</span>
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {(modules.featuredRepos?.repos || []).map((repo, idx) => (
+                <div key={idx} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-white">{repo.name}</span>
+                    <span className="text-slate-400 block text-[11px]">{repo.description}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveProject(idx)}
+                    className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -427,12 +599,70 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
           </div>
         )}
 
+        {/* STEP 9: MOBILE */}
+        {currentStep === 9 && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <p className="text-xs text-slate-400">Select Mobile &amp; Cross-Platform Tech:</p>
+            <div className="flex flex-wrap gap-2">
+              {SKILL_MAP.mobile.map((slug) => {
+                const label = getBadgeLabel(slug);
+                const selected = isBadgeSelected(slug);
+                return (
+                  <button
+                    key={slug}
+                    type="button"
+                    onClick={() => toggleBadge(slug)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                      selected
+                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-md'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selected ? '#3b82f6' : '#64748b' }} />
+                    <span>{label}</span>
+                    {selected && <FiCheck size={12} className="text-blue-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 10: AI & ML */}
+        {currentStep === 10 && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <p className="text-xs text-slate-400">Select AI, Machine Learning &amp; Data Science Tech:</p>
+            <div className="flex flex-wrap gap-2">
+              {SKILL_MAP.aiml.map((slug) => {
+                const label = getBadgeLabel(slug);
+                const selected = isBadgeSelected(slug);
+                return (
+                  <button
+                    key={slug}
+                    type="button"
+                    onClick={() => toggleBadge(slug)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                      selected
+                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-md'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selected ? '#3b82f6' : '#64748b' }} />
+                    <span>{label}</span>
+                    {selected && <FiCheck size={12} className="text-blue-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* STEP 11: GITHUB ANALYTICS */}
         {currentStep === 11 && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <h4 className="text-xs font-bold text-white">GitHub Analytics Cards</h4>
+                <h4 className="text-xs font-bold text-white">GitHub Analytics Widgets</h4>
                 <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
@@ -454,11 +684,99 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                 <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={modules.githubAnalytics?.showTrophies}
-                    onChange={(e) => updateModule('githubAnalytics', { showTrophies: e.target.checked })}
+                    checked={modules.githubAnalytics?.showReposPerLanguage}
+                    onChange={(e) => updateModule('githubAnalytics', { showReposPerLanguage: e.target.checked })}
                     className="rounded border-slate-700 text-blue-600 focus:ring-0"
                   />
-                  <span>Show GitHub Trophies</span>
+                  <span>Show Top Languages Breakdown</span>
+                </label>
+              </div>
+
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <h4 className="text-xs font-bold text-white">Growth &amp; View Counters</h4>
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={modules.beastModeDashboard?.showProfileViews}
+                    onChange={(e) => updateModule('beastModeDashboard', { showProfileViews: e.target.checked })}
+                    className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                  />
+                  <span>Enable Live Profile Views Counter</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={modules.beastModeDashboard?.showGrowthMetrics}
+                    onChange={(e) => updateModule('beastModeDashboard', { showGrowthMetrics: e.target.checked })}
+                    className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                  />
+                  <span>Show Followers &amp; Stars Badges</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 12: GITHUB TROPHIES */}
+        {currentStep === 12 && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+              <h4 className="text-xs font-bold text-white">GitHub Trophies Showcase</h4>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={modules.githubAnalytics?.showTrophies}
+                  onChange={(e) => updateModule('githubAnalytics', { showTrophies: e.target.checked })}
+                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                />
+                <span>Include GitHub Trophy Ranks in README</span>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 13: PLATFORM METRICS */}
+        {currentStep === 13 && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <h4 className="text-xs font-bold text-white">Coding Platforms</h4>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 block mb-1">LeetCode Username</label>
+                  <input
+                    type="text"
+                    value={modules.educationAndSkills?.leetCodeUsername || ''}
+                    onChange={(e) =>
+                      updateModule('educationAndSkills', {
+                        showLeetCodeCard: true,
+                        leetCodeUsername: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. alex_rivera"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <h4 className="text-xs font-bold text-white">Interactive Widgets</h4>
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={modules.interactiveWidgets?.showDailyDevQuote}
+                    onChange={(e) => updateModule('interactiveWidgets', { showDailyDevQuote: e.target.checked })}
+                    className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                  />
+                  <span>Show Daily Dev Quote Widget</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={modules.interactiveWidgets?.showCodingChallenge}
+                    onChange={(e) => updateModule('interactiveWidgets', { showCodingChallenge: e.target.checked })}
+                    className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                  />
+                  <span>Show Daily Coding Challenge</span>
                 </label>
               </div>
             </div>
@@ -470,7 +788,7 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">LinkedIn Profile Handle</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">LinkedIn Profile</label>
                 <input
                   type="text"
                   value={modules.socialLinks?.linkedin || ''}
@@ -489,11 +807,31 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
                 />
               </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Portfolio URL</label>
+                <input
+                  type="text"
+                  value={modules.socialLinks?.portfolio || ''}
+                  onChange={(e) => updateModule('socialLinks', { portfolio: e.target.value, enabled: true })}
+                  placeholder="e.g. https://alexrivera.dev"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Discord / Community</label>
+                <input
+                  type="text"
+                  value={modules.socialLinks?.discord || ''}
+                  onChange={(e) => updateModule('socialLinks', { discord: e.target.value, enabled: true })}
+                  placeholder="e.g. alex#1234"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* STEP 15: DIVIDERS & THEME */}
+        {/* STEP 15: DIVIDERS & THEMES */}
         {currentStep === 15 && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div>
@@ -517,6 +855,32 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-2">Select Theme Color Palette</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'github_dark', name: 'GitHub Dark' },
+                  { id: 'dracula', name: 'Dracula Slate' },
+                  { id: 'tokyonight', name: 'Tokyo Night' },
+                  { id: 'catppuccin', name: 'Catppuccin' },
+                  { id: 'nord', name: 'Nord Minimal' },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTheme(t.id as any)}
+                    className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      theme === t.id
+                        ? 'bg-blue-600 border-blue-500 text-white'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    {t.name}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -563,6 +927,34 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
           </div>
         )}
 
+        {/* STEP 17: CUSTOM FOOTER */}
+        {currentStep === 17 && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="space-y-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Footer Closing Statement</label>
+                <input
+                  type="text"
+                  value={modules.footer?.closingText || ''}
+                  onChange={(e) => updateModule('footer', { closingText: e.target.value, enabled: true })}
+                  placeholder="e.g. Thanks for visiting my GitHub profile! 🚀"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={modules.footer?.showVisitorBadge}
+                  onChange={(e) => updateModule('footer', { showVisitorBadge: e.target.checked })}
+                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                />
+                <span>Include Visitor Badge Counter in Footer</span>
+              </label>
+            </div>
+          </div>
+        )}
+
         {/* STEP 18: REVIEW & EXPORT */}
         {currentStep === 18 && (
           <div className="space-y-5 animate-in fade-in duration-200">
@@ -594,15 +986,6 @@ export function ReadmeWizard({ username, onComplete, onOpenDeployModal }: Readme
             <div className="max-h-[350px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 p-4">
               <MarkdownPreview markdown={markdown} username={username} />
             </div>
-          </div>
-        )}
-
-        {/* Default Fallback for intermediate steps */}
-        {![1, 2, 3, 5, 6, 7, 8, 11, 14, 15, 16, 18].includes(currentStep) && (
-          <div className="p-8 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-3">
-            <div className="text-2xl">⚙️</div>
-            <h4 className="text-sm font-bold text-white">Section Configured &amp; Active</h4>
-            <p className="text-xs text-slate-400">This module is automatically compiled into your final README output based on your active profile data.</p>
           </div>
         )}
       </div>

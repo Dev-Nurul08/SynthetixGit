@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { textToGrid52x7 } from '@/lib/font-matrix';
-import { generateBashPainterScript } from '@/lib/git-painter-generator';
+import { generateBashPainterScript, generatePowerShellPainterScript } from '@/lib/git-painter-generator';
 import {
   FiDownload,
   FiTrash2,
@@ -13,6 +13,8 @@ import {
   FiCopy,
   FiCheck,
   FiInfo,
+  FiCode,
+  FiTerminal,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -28,10 +30,11 @@ export function CanvasPainter({ username = '' }: CanvasPainterProps) {
     Array.from({ length: 52 }, () => Array(7).fill(0))
   );
   const [selectedLevel, setSelectedLevel] = useState<number>(4);
+  const [scriptType, setScriptType] = useState<'bash' | 'powershell'>('powershell');
   const [customText, setCustomText] = useState<string>(() => {
-    if (!username) return '';
+    if (!username) return 'HELLO';
     const alphanumeric = username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
-    return alphanumeric.charAt(0).toUpperCase() + alphanumeric.slice(1);
+    return (alphanumeric.charAt(0).toUpperCase() + alphanumeric.slice(1)) || 'HELLO';
   });
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [copiedScript, setCopiedScript] = useState<boolean>(false);
@@ -113,223 +116,222 @@ export function CanvasPainter({ username = '' }: CanvasPainterProps) {
   };
 
   const getScriptContent = () => {
-    return generateBashPainterScript({
-      username,
-      userEmail: `${username}@users.noreply.github.com`,
-      repoName: 'github-contribution-art',
+    const config = {
+      username: username || 'octocat',
+      userEmail: `${username || 'octocat'}@users.noreply.github.com`,
+      repoName: 'github-calendar-art',
       grid,
-    });
+      targetYear: 2025,
+    };
+
+    return scriptType === 'powershell'
+      ? generatePowerShellPainterScript(config)
+      : generateBashPainterScript(config);
   };
 
-  const handleExportScript = () => {
-    const script = getScriptContent();
-    const blob = new Blob([script], { type: 'application/x-sh' });
+  const handleCopyScript = () => {
+    const content = getScriptContent();
+    navigator.clipboard.writeText(content);
+    setCopiedScript(true);
+    toast.success(`Copied ${scriptType === 'powershell' ? 'PowerShell (.ps1)' : 'Bash (.sh)'} script!`);
+    setTimeout(() => setCopiedScript(false), 2000);
+  };
+
+  const handleDownloadScript = () => {
+    const content = getScriptContent();
+    const filename = scriptType === 'powershell' ? 'paint-calendar.ps1' : 'paint-calendar.sh';
+    const mime = scriptType === 'powershell' ? 'text/plain' : 'application/x-sh';
+
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'paint-graph.sh';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Downloaded paint-graph.sh!');
-  };
-
-  const handleCopyScript = () => {
-    const script = getScriptContent();
-    navigator.clipboard.writeText(script);
-    setCopiedScript(true);
-    setTimeout(() => setCopiedScript(false), 2000);
-    toast.success('Copied bash script to clipboard!');
+    toast.success(`Downloaded ${filename}!`);
   };
 
   return (
-    <div
-      className="p-5 rounded-3xl bg-bg-primary/90 border-2 border-border-secondary space-y-5 shadow-2xl select-none"
-      onMouseDown={() => setIsMouseDown(true)}
-      onMouseUp={() => setIsMouseDown(false)}
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-secondary pb-4">
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+      {/* Header Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-accent-emerald animate-ping" />
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <FiZap className="text-accent-emerald" size={16} />
-              <span>52x7 GitHub Contribution Graph Art Studio</span>
-            </h3>
+          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">GitHub Contribution Graph Painter</span>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
+            <span>Draw Pixel Art on @{username || 'octocat'}&apos;s GitHub Timeline</span>
+          </h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 font-mono">
+            Pixels: <strong className="text-emerald-400">{totalPixels}</strong> / 364
           </div>
-          <p className="text-xs text-text-tertiary mt-1">
-            Draw custom pixel art, write names, and generate automated bash scripts to paint on your GitHub calendar.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleCopyScript}
-            className="px-3.5 py-2 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-text-primary font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-border-secondary"
-          >
-            {copiedScript ? <FiCheck size={14} className="text-accent-emerald" /> : <FiCopy size={14} />}
-            <span>{copiedScript ? 'Copied!' : 'Copy Script'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportScript}
-            className="px-4 py-2 rounded-xl bg-accent-emerald hover:bg-accent-emerald text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-accent-emerald/25"
-          >
-            <FiDownload size={14} />
-            <span>Download paint-graph.sh</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
-          <span className="text-[10px] uppercase font-bold text-text-muted block">Total Weeks</span>
-          <span className="text-sm font-mono font-bold text-text-primary">52 Weeks</span>
-        </div>
-        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
-          <span className="text-[10px] uppercase font-bold text-text-muted block">Painted Pixels</span>
-          <span className="text-sm font-mono font-bold text-accent-emerald">{totalPixels} / 364</span>
-        </div>
-        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
-          <span className="text-[10px] uppercase font-bold text-text-muted block">Est. Commits</span>
-          <span className="text-sm font-mono font-bold text-brand-400">~{estimatedCommits} Commits</span>
-        </div>
-        <div className="p-3 rounded-xl bg-bg-canvas/80 border border-border-primary">
-          <span className="text-[10px] uppercase font-bold text-text-muted block">Target Author</span>
-          <span className="text-sm font-mono font-bold text-amber-300 truncate block">@{username}</span>
-        </div>
-      </div>
-
-      <div className="p-3.5 rounded-2xl bg-bg-canvas border border-border-primary space-y-2.5">
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-bg-primary border border-border-primary w-full">
-            <FiType size={15} className="text-brand-400 shrink-0" />
-            <input
-              type="text"
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleApplyText()}
-              placeholder="Type word (e.g. HELLO, DEV, CODE, OSS)..."
-              className="bg-transparent text-xs font-bold text-white outline-none w-full uppercase tracking-wider"
-              maxLength={8}
-            />
+          <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 font-mono">
+            Commits: <strong className="text-blue-400">{estimatedCommits}</strong>
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleApplyText()}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-950 text-xs font-bold transition-all cursor-pointer shrink-0 shadow-md shadow-brand-500/25"
-          >
-            Auto-Paint Word
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-bold text-text-muted">Quick Words:</span>
-          {['HELLO', 'CODE', 'DEV', 'GIT', 'PRO', 'OSS'].map((word) => (
-            <button
-              key={word}
-              type="button"
-              onClick={() => {
-                setCustomText(word);
-                handleApplyText(word);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-white border border-border-primary text-[11px] font-bold transition-all cursor-pointer"
-            >
-              {word}
-            </button>
-          ))}
         </div>
       </div>
 
-      <div className="overflow-x-auto p-4 rounded-2xl bg-bg-canvas border border-border-primary">
-        <div className="inline-grid grid-rows-7 grid-flow-col gap-1.5 min-w-[780px]">
-          {Array.from({ length: 7 }).map((_, r) =>
-            Array.from({ length: 52 }).map((_, c) => {
-              const level = grid[c]?.[r] || 0;
-              return (
-                <div
-                  key={`${c}-${r}`}
-                  onClick={() => handleCellClick(c, r)}
-                  onMouseEnter={() => handleCellHover(c, r)}
-                  className="w-3.5 h-3.5 rounded-xs transition-all cursor-pointer hover:scale-125 hover:z-10 hover:ring-2 hover:ring-white shadow-xs"
-                  style={{ backgroundColor: LEVEL_COLORS[level] }}
-                  title={`Week ${c + 1}, Day ${r + 1} • Level ${level} (${LEVEL_LABELS[level]})`}
-                />
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-text-tertiary mr-1">Green Intensity:</span>
-          {LEVEL_COLORS.map((col, idx) => (
+      {/* Controls & Tools Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+        {/* Brush Color Level Selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-400">Brush Level:</span>
+          {LEVEL_COLORS.map((color, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setSelectedLevel(idx)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer text-xs font-bold ${
+              title={LEVEL_LABELS[idx]}
+              className={`w-6 h-6 rounded-lg transition-transform cursor-pointer border ${
                 selectedLevel === idx
-                  ? 'border-white bg-bg-secondary text-white ring-2 ring-brand-400'
-                  : 'border-border-primary bg-bg-canvas text-text-tertiary'
+                  ? 'scale-125 border-white shadow-lg ring-2 ring-blue-500'
+                  : 'border-slate-700 hover:scale-105'
               }`}
-            >
-              <span className="w-3 h-3 rounded-xs shrink-0" style={{ backgroundColor: col }} />
-              <span>{idx === 0 ? 'Clear (0)' : `Lvl ${idx}`}</span>
-            </button>
+              style={{ backgroundColor: color }}
+            />
           ))}
         </div>
 
+        {/* Text Generator Tool */}
         <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value)}
+            placeholder="Text (max 8 chars)"
+            maxLength={10}
+            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500 w-36 uppercase font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => handleApplyText()}
+            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <FiType size={13} />
+            <span>Paint Text</span>
+          </button>
+        </div>
+
+        {/* Preset Stamps */}
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => handlePresetStamp('heart')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-pink-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            title="Heart Stamp"
           >
-            <FiHeart size={14} className="text-pink-400" />
+            <FiHeart size={13} className="text-rose-400" />
             <span>Heart</span>
           </button>
           <button
             type="button"
             onClick={() => handlePresetStamp('invader')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-accent-emerald border border-border-primary text-xs font-bold transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            title="Space Invader Stamp"
           >
-            <FiSmile size={14} className="text-accent-emerald" />
+            <FiZap size={13} className="text-amber-400" />
             <span>Invader</span>
           </button>
           <button
             type="button"
             onClick={() => handlePresetStamp('snake')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-bg-secondary text-text-secondary hover:text-cyan-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            title="Snake Wave Stamp"
           >
-            <span className="text-sm">🐍</span>
-            <span>Wave</span>
+            <span>🐍 Snake</span>
           </button>
           <button
             type="button"
             onClick={handleClear}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-bg-canvas hover:bg-red-950/40 text-text-tertiary hover:text-red-400 border border-border-primary text-xs font-bold transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-950/40 border border-slate-800 text-slate-400 hover:text-rose-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            title="Clear Canvas"
           >
-            <FiTrash2 size={14} />
+            <FiTrash2 size={13} />
             <span>Clear</span>
           </button>
         </div>
       </div>
 
-      <div className="p-3.5 rounded-2xl bg-brand-950/30 border border-brand-400/20 flex items-start gap-2.5 text-xs text-brand-200">
-        <FiInfo size={16} className="text-brand-400 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <span className="font-bold text-white block">How to Paint on Your Live GitHub Contribution Calendar:</span>
-          <p className="text-text-secondary text-[11px] leading-relaxed">
-            1. Click <strong>Download paint-graph.sh</strong> above. <br />
-            2. Open a terminal and run <code className="text-accent-emerald bg-black/40 px-1.5 py-0.5 rounded">bash paint-graph.sh</code>. <br />
-            3. Push the generated repository to your GitHub account to light up your 52-week contribution graph with your custom pixel art!
-          </p>
+      {/* 52 x 7 Interactive Contribution Grid */}
+      <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800">
+        <div
+          className="inline-grid grid-rows-7 grid-flow-col gap-1 p-4 rounded-2xl bg-slate-950 border border-slate-800/80 shadow-inner select-none"
+          onMouseDown={() => setIsMouseDown(true)}
+          onMouseUp={() => setIsMouseDown(false)}
+          onMouseLeave={() => setIsMouseDown(false)}
+        >
+          {grid.map((col, colIdx) =>
+            col.map((level, rowIdx) => (
+              <div
+                key={`${colIdx}-${rowIdx}`}
+                onClick={() => handleCellClick(colIdx, rowIdx)}
+                onMouseEnter={() => handleCellHover(colIdx, rowIdx)}
+                className="w-3.5 h-3.5 rounded-[3px] transition-colors cursor-pointer hover:ring-1 hover:ring-white/50"
+                style={{ backgroundColor: LEVEL_COLORS[level] }}
+                title={`Week ${colIdx + 1}, Day ${rowIdx + 1}: Level ${level}`}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Script Generator & Export Options */}
+      <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <FiTerminal className="text-emerald-400" />
+            <h3 className="text-xs font-bold text-white">Generated Backdated Commit Painter Script</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setScriptType('powershell')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                scriptType === 'powershell'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
+            >
+              PowerShell (.ps1)
+            </button>
+            <button
+              type="button"
+              onClick={() => setScriptType('bash')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                scriptType === 'bash'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
+            >
+              Bash (.sh)
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-400 leading-relaxed">
+          Run this script locally to execute automated backdated commits on your GitHub contribution graph timeline.
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleCopyScript}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-600/20"
+          >
+            {copiedScript ? <FiCheck size={14} /> : <FiCopy size={14} />}
+            <span>Copy {scriptType === 'powershell' ? 'PowerShell' : 'Bash'} Script</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadScript}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20"
+          >
+            <FiDownload size={14} />
+            <span>Download .{scriptType === 'powershell' ? 'ps1' : 'sh'} File</span>
+          </button>
         </div>
       </div>
     </div>
