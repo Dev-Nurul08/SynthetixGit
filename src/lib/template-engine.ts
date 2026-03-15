@@ -487,13 +487,13 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     if (modules.githubAnalytics.showReposPerLanguage || modules.githubAnalytics.showMostCommitLanguage || modules.githubAnalytics.showStatsCard) {
       lines.push('  <div align="center">');
       if (modules.githubAnalytics.showReposPerLanguage) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${user}&theme=dark" width="32%" alt="Repos per Language" />`);
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${user}&theme=dark" width="350" alt="Repos per Language" />`);
       }
       if (modules.githubAnalytics.showMostCommitLanguage) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${user}&theme=dark" width="32%" alt="Most Commit Language" />`);
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${user}&theme=dark" width="350" alt="Most Commit Language" />`);
       }
       if (modules.githubAnalytics.showStatsCard) {
-        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=${user}&theme=dark" width="32%" alt="Overall Stats" />`);
+        lines.push(`    <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=${user}&theme=dark" width="350" alt="Overall Stats" />`);
       }
       lines.push('  </div>');
       lines.push('');
@@ -508,63 +508,51 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('  <h2 align="center">🎓 Education & Skills Journey</h2>');
     lines.push('');
     lines.push('  <div align="center">');
-    lines.push('  <table width="100%">');
-    lines.push('    <tr>');
-    lines.push('      <td width="50%" valign="top">');
-    lines.push('        <h3 align="center">📚 Academic Path</h3>');
-    lines.push('        <div align="center">');
     if (edu.institutionName) {
-      lines.push(`          <img src="https://img.shields.io/badge/${encodeURIComponent(edu.institutionName)}-${edu.institutionColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
-      lines.push('          <br /><br />');
+      lines.push(`    <img src="https://img.shields.io/badge/${encodeURIComponent(edu.institutionName)}-${edu.institutionColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
+      lines.push('    <br /><br />');
     }
 
     if (edu.skillIcons.length > 0) {
       const chunk1 = edu.skillIcons.slice(0, 30).join(',');
       const chunk2 = edu.skillIcons.slice(30).join(',');
-      lines.push('          <div style="margin: 20px 0; font-size: 1.1em;">');
-      lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk1}" style="height: 54px; margin: 4px;" alt="Skill Icons" />`);
+      lines.push('    <div align="center" style="margin: 20px 0;">');
+      lines.push(`      <img src="https://skillicons.dev/icons?i=${chunk1}" style="height: 54px; margin: 4px;" alt="Skill Icons" />`);
       if (chunk2) {
-        lines.push(`            <img src="https://skillicons.dev/icons?i=${chunk2}" style="height: 54px; margin: 4px;" alt="Additional Skill Icons" />`);
+        lines.push(`      <img src="https://skillicons.dev/icons?i=${chunk2}" style="height: 54px; margin: 4px;" alt="Additional Skill Icons" />`);
       }
-      lines.push('          </div>');
+      lines.push('    </div>');
     }
 
     if (edu.additionalBadges.length > 0) {
-      lines.push('          <h3 align="center">Additional Skills</h3>');
-      lines.push('          <div style="margin: 15px 0;">');
+      lines.push('    <h3 align="center">Additional Skills</h3>');
+      lines.push('    <div align="center" style="margin: 15px 0;">');
       for (const badge of edu.additionalBadges) {
-        lines.push(`            <img src="https://img.shields.io/badge/${badge.name}-${badge.color}?style=for-the-badge&logo=${badge.logo}&logoColor=white" style="height: 30px; margin: 3px;" />`);
+        lines.push(`      <img src="https://img.shields.io/badge/${badge.name}-${badge.color}?style=for-the-badge&logo=${badge.logo}&logoColor=white" style="height: 30px; margin: 3px;" />`);
       }
-      lines.push('          </div>');
+      lines.push('    </div>');
     }
 
     if (edu.showWakaTimeDropdown && edu.wakaTimeShareSvgUrl) {
-      lines.push('          <br />');
-      lines.push('          <details open>');
-      lines.push('            <summary><b>🔍 View Detailed Coding Activity</b></summary>');
-      lines.push('            <br />');
-      lines.push(`            <img src="${edu.wakaTimeShareSvgUrl}" alt="WakaTime Stats" style="border-radius: 12px; box-shadow: 0 0 15px rgba(34, 211, 238, 0.25);" />`);
-      lines.push(`            <br /><strong style="color: #22d3ee; font-size: 16px; font-family: 'Fira Code';">⏱️ Coding Activity - Auto-Updates Weekly</strong>`);
-      lines.push('          </details>');
+      lines.push('    <br />');
+      lines.push('    <details open>');
+      lines.push('      <summary><b>🔍 View Detailed Coding Activity</b></summary>');
+      lines.push('      <br />');
+      lines.push(`      <img src="${edu.wakaTimeShareSvgUrl}" alt="WakaTime Stats" style="border-radius: 12px;" />`);
+      lines.push('    </details>');
     }
 
-    lines.push('        </div>');
-    lines.push('      </td>');
+    if (edu.showTopLangsPie || (edu.showLeetCodeCard && edu.leetCodeUsername)) {
+      lines.push('    <div align="center" style="margin: 20px 0;">');
+      if (edu.showTopLangsPie) {
+        lines.push(`      <img width="400" height="300" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${user}&layout=pie&theme=dark&hide_border=true" alt="Top Languages Pie" />`);
+      }
+      if (edu.showLeetCodeCard && edu.leetCodeUsername) {
+        lines.push(`      <img src="https://leetcard.jacoblin.cool/${edu.leetCodeUsername}?theme=dark&font=Karma&ext=heatmap" width="400" alt="LeetCode Stats" />`);
+      }
+      lines.push('    </div>');
+    }
 
-    lines.push('      <td width="50%" valign="top">');
-    lines.push('        <h3 align="center">🚀 Skill Proficiency & Coding</h3>');
-    lines.push('        <div align="center">');
-    if (edu.showTopLangsPie) {
-      lines.push(`          <img width="400" height="300" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${user}&layout=pie&theme=dark&hide_border=true" alt="Top Languages Pie" />`);
-      lines.push('          <br />');
-    }
-    if (edu.showLeetCodeCard && edu.leetCodeUsername) {
-      lines.push(`          <img src="https://leetcard.jacoblin.cool/${edu.leetCodeUsername}?theme=dark&font=Karma&ext=heatmap" width="400" alt="LeetCode Stats" />`);
-    }
-    lines.push('        </div>');
-    lines.push('      </td>');
-    lines.push('    </tr>');
-    lines.push('  </table>');
     lines.push('  </div>');
     lines.push('');
     lines.push(`  ${divider}`);
@@ -575,27 +563,17 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
     lines.push('  <h2 align="center">🛠️ Technology Arsenal</h2>');
     lines.push('');
     lines.push('  <div align="center">');
-    lines.push('    <table>');
+    lines.push('    <div align="center" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">');
 
-    const items = modules.techArsenal.items;
-    const rows: typeof items[] = [];
-    for (let i = 0; i < items.length; i += 5) {
-      rows.push(items.slice(i, i + 5));
+    for (const item of modules.techArsenal.items) {
+      lines.push('      <div align="center" style="min-width: 110px; padding: 10px;">');
+      lines.push(`        <img src="${item.iconUrl}" alt="${item.name}" width="60" height="60" />`);
+      lines.push(`        <br /><b>${item.name}</b>`);
+      lines.push(`        <br /><img src="https://img.shields.io/badge/${encodeURIComponent(item.levelBadge)}-${item.levelColor}?style=flat-square" />`);
+      lines.push('      </div>');
     }
 
-    for (const row of rows) {
-      lines.push('      <tr>');
-      for (const item of row) {
-        lines.push('        <td align="center" width="110">');
-        lines.push(`          <img src="${item.iconUrl}" alt="${item.name}" width="70" height="70" />`);
-        lines.push(`          <br /><b>${item.name}</b>`);
-        lines.push(`          <br /><img src="https://img.shields.io/badge/${encodeURIComponent(item.levelBadge)}-${item.levelColor}?style=flat-square" />`);
-        lines.push('        </td>');
-      }
-      lines.push('      </tr>');
-    }
-
-    lines.push('    </table>');
+    lines.push('    </div>');
     lines.push('  </div>');
     lines.push('');
     lines.push(`  ${divider}`);

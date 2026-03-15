@@ -576,8 +576,8 @@ export default function PlayGamePage() {
 
       {/* ── CTA Modal (Game Over / Triggered) ── */}
       {showCtaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative max-w-md w-full bg-bg-primary border border-border-secondary rounded-3xl shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-[90vw] sm:w-[480px] min-w-[300px] max-w-md bg-bg-primary border border-border-secondary rounded-3xl shadow-2xl p-6 sm:p-8 shrink-0">
             <button
               type="button"
               onClick={dismissCtaModal}
