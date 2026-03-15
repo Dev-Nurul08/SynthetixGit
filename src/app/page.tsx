@@ -246,9 +246,12 @@ export default function HomePage() {
 
   const routeForMode = (username: string, mode: StudioMode) => {
     if (mode === "arcade") {
-      return `/play/${encodeURIComponent(username)}/snake`;
+      return `/games?user=${encodeURIComponent(username)}`;
     }
-    return `/studio?user=${encodeURIComponent(username)}&mode=${mode}`;
+    if (mode === "canvas") {
+      return `/art-generator?user=${encodeURIComponent(username)}`;
+    }
+    return `/builder?user=${encodeURIComponent(username)}`;
   };
 
   const handleScan = async (
