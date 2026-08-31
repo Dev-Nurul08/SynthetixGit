@@ -416,6 +416,39 @@ export default function PlayGamePage() {
       <footer className="w-full text-center text-xs text-slate-500 py-3 border-t border-slate-800">
         SynthetixGit Interactive Arcade Suite • Powered by HTML5 Canvas & GitHub Commits
       </footer>
+      {/* On-screen Mobile D-Pad Controls */}
+      <div className="flex flex-col items-center gap-1.5 md:hidden mt-4 pb-6">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))}
+          className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+        >
+          ▲
+        </button>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))}
+            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }))}
+            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+          >
+            ▼
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))}
+            className="w-14 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-bold flex items-center justify-center active:scale-95 transition-all text-lg shadow-lg"
+          >
+            ▶
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
