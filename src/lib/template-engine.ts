@@ -382,13 +382,10 @@ export function createDefaultModules(): ModuleConfig {
 }
 
 function renderDivider(modules: ModuleConfig): string {
-  if (!modules.sectionDivider || !modules.sectionDivider.enabled) {
+  if (!modules.sectionDivider || !modules.sectionDivider.enabled || modules.sectionDivider.style === 'markdown-line') {
     return '---';
   }
-  if (modules.sectionDivider.style === 'markdown-line') {
-    return '---';
-  }
-  return `<img src="https://synthetixgit.vercel.app/api/svg/divider?style=${modules.sectionDivider.style}" width="100%" alt="Section Divider" />`;
+  return '<img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=1,2,4,5,40&height=4&section=header" width="100%" alt="Section Divider" />';
 }
 
 export function generateProfileMarkdown(config: ProfileConfig): string {
@@ -414,15 +411,13 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       lines.push(`  <img src="https://capsule-render.vercel.app/api?type=venom&color=gradient&customColorList=1,2,4,5,40&height=250&section=header&text=${titleEnc}&fontSize=65&animation=twinkling&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Fira%20Code&descFont=Roboto&textColor=FF4500&descColor=00FF7F&borderRadius=25" width="100%" alt="Header Banner" />`);
     } else if (modules.headerBanner.headerStyle === 'waving-capsule') {
       lines.push(`  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,2,4,5,40&height=220&section=header&text=${titleEnc}&fontSize=50&animation=twinkling&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto" width="100%" alt="Header Banner" />`);
-    } else if (modules.headerBanner.headerStyle === 'cartoonish-3d') {
-      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=cartoonish-3d" width="100%" alt="3D Cartoonish Header" />`);
-    } else if (modules.headerBanner.headerStyle === 'cyberpunk-glitch') {
-      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=cyberpunk-glitch" width="100%" alt="Cyberpunk Glitch Header" />`);
+    } else if (modules.headerBanner.headerStyle === 'cartoonish-3d' || modules.headerBanner.headerStyle === 'cyberpunk-glitch') {
+      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=slice&color=gradient&customColorList=0,2,4,6,30&height=230&section=header&text=${titleEnc}&fontSize=60&animation=fadeIn&fontAlignY=38&desc=${subEnc}&descAlignY=62&font=Orbitron&descFont=Fira%20Code&textColor=00FFFF&descColor=39D353" width="100%" alt="Header Banner" />`);
     } else if (modules.headerBanner.headerStyle === 'terminal-prompt') {
-      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=terminal-prompt" width="100%" alt="Terminal Header" />`);
+      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=cylinder&color=0:0d1117,100:161b22&height=200&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Fira%20Code&descFont=Roboto&textColor=38EF7D&descColor=00FFFF" width="100%" alt="Terminal Header" />`);
     } else if (modules.headerBanner.headerStyle === 'handwritten-script') {
-      lines.push(`  <img src="https://synthetixgit.vercel.app/api/svg/header?text=${titleEnc}&subtitle=${subEnc}&style=handwritten-script" width="100%" alt="Signature Header" />`);
-    } else if (modules.headerBanner.headerStyle === 'minimal') {
+      lines.push(`  <img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=10,20,30,40&height=220&section=header&text=${titleEnc}&fontSize=55&fontAlignY=40&desc=${subEnc}&descAlignY=65&font=Kalam&descFont=Roboto&textColor=FFD700&descColor=E2E8F0" width="100%" alt="Signature Header" />`);
+    } else {
       lines.push(`  <h1>${modules.headerBanner.title || user}</h1>`);
       lines.push(`  <p><em>${modules.headerBanner.subtitle}</em></p>`);
     }
@@ -684,17 +679,17 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
 
   // ── 8. Breakout / Snake Game Suite ──
   if (modules.gameSuite.enabled) {
-    const gType = modules.gameSuite.gameType || 'snake';
-    const gTitle = gType === 'breakout' ? 'Graph Brick Breaker' : gType === 'pacman' ? 'Pac-Man Commit Run' : 'Contribution Snake';
-    lines.push('  <!-- 🎮 Interactive Game Suite Banner (Click to Play Live in Browser) -->');
-    lines.push(`  <h2 align="center">🎮 Play ${gTitle} (Click to Play)</h2>`);
+    lines.push('  <!-- 🎮 Interactive Arcade & Contribution Snake -->');
+    lines.push('  <h2 align="center">🎮 GitHub Contribution Snake Game</h2>');
     lines.push('');
-    lines.push('  <div align="center">');
-    lines.push(`    <a href="https://synthetixgit.vercel.app/play/${user}/${gType}">`);
-    lines.push(`      <img src="https://synthetixgit.vercel.app/api/svg/game-banner?username=${user}&game=${gType}" width="100%" alt="${gTitle}" />`);
-    lines.push('    </a>');
+    lines.push('  <div align="center" style="background: linear-gradient(135deg, #161b22, #0d1117); padding: 20px; border-radius: 16px; margin: 20px 0; border: 1px solid #30363d;">');
+    lines.push('    <picture>');
+    lines.push(`      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake-dark.svg" />`);
+    lines.push(`      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+    lines.push(`      <img alt="GitHub Contribution Snake" src="https://raw.githubusercontent.com/${user}/${user}/output/github-contribution-grid-snake.svg" />`);
+    lines.push('    </picture>');
     lines.push('    <br />');
-    lines.push(`    <em>${modules.gameSuite.motto}</em>`);
+    lines.push(`    <em>${modules.gameSuite.motto || 'Code. Commit. Conquer.'}</em>`);
     lines.push('  </div>');
     lines.push('');
     lines.push(`  ${divider}`);
