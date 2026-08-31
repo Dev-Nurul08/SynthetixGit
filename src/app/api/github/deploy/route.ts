@@ -73,35 +73,45 @@ export async function POST(request: NextRequest) {
     });
 
     // 3. Optionally provision .github/workflows/snake.yml
+    let workflowSuccess = false;
+    let workflowWarning: string | undefined;
     if (workflowYaml) {
-      let workflowSha: string | undefined;
       try {
-        const existingWf = await octokit.repos.getContent({
+        let workflowSha: string | undefined;
+        try {
+          const existingWf = await octokit.repos.getContent({
+            owner: username,
+            repo: repoName,
+            path: '.github/workflows/snake.yml',
+          });
+          if (!Array.isArray(existingWf.data) && 'sha' in existingWf.data) {
+            workflowSha = existingWf.data.sha;
+          }
+        } catch (e: any) {
+          // Workflow doesn't exist yet
+        }
+
+        await octokit.repos.createOrUpdateFileContents({
           owner: username,
           repo: repoName,
           path: '.github/workflows/snake.yml',
+          message: 'ci: auto-provision GitHub Actions Snake & Arcade generator workflow 🐍',
+          content: Buffer.from(workflowYaml).toString('base64'),
+          sha: workflowSha,
         });
-        if (!Array.isArray(existingWf.data) && 'sha' in existingWf.data) {
-          workflowSha = existingWf.data.sha;
-        }
-      } catch (e: any) {
-        // Workflow doesn't exist yet
+        workflowSuccess = true;
+      } catch (wfErr: any) {
+        console.warn('Workflow deployment warning:', wfErr.message);
+        workflowWarning = 'README deployed successfully! Note: Enable "workflow" scope on your GitHub PAT to auto-provision .github/workflows/snake.yml.';
       }
-
-      await octokit.repos.createOrUpdateFileContents({
-        owner: username,
-        repo: repoName,
-        path: '.github/workflows/snake.yml',
-        message: 'ci: auto-provision GitHub Actions Snake & Arcade generator workflow 🐍',
-        content: Buffer.from(workflowYaml).toString('base64'),
-        sha: workflowSha,
-      });
     }
 
     return NextResponse.json({
       success: true,
       repoUrl: `https://github.com/${username}/${repoName}`,
       commitSha: readmeResponse.data.commit.sha,
+      workflowSuccess,
+      warning: workflowWarning,
       message: `Successfully deployed README.md to ${username}/${repoName}!`,
     });
   } catch (error: any) {
