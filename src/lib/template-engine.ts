@@ -602,7 +602,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       secLines.push('  <div align="center">');
       secLines.push('  <table width="100%">');
       secLines.push('    <tr>');
-      secLines.push('      <td width="50%" valign="top">');
+      secLines.push('      <td width="50%" style="vertical-align: top;">');
       secLines.push('        <h3 align="center">📚 Academic Path</h3>');
       secLines.push('        <div align="center">');
       secLines.push(`          <img src="https://img.shields.io/badge/${edu.institutionName || 'University'}-${edu.institutionColor || tc.statsOverrides.titleColor}?style=for-the-badge&logo=graduationcap&logoColor=white" />`);
@@ -646,7 +646,7 @@ export function compileProfile(config: ProfileConfig): { markdown: string; workf
       secLines.push('      </td>');
 
       // Right Column: Proficiency Charts & LeetCode
-      secLines.push('      <td width="50%" valign="top">');
+      secLines.push('      <td width="50%" style="vertical-align: top;">');
       secLines.push('        <h3 align="center">🚀 Skill Proficiency & Coding</h3>');
       secLines.push('        <div align="center">');
       if (edu.showTopLangsPie) {
