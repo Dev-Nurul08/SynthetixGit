@@ -6,6 +6,9 @@
     "synthetix-cli": "./bin/synthetix-cli.js"
   },
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

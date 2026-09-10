@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { getAppUrl } from "@/lib/app-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,12 +20,16 @@ const jetbrainsMono = JetBrains_Mono({
   adjustFontFallback: true,
 });
 
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://synthetixgit.vercel.app");
+function resolveMetadataBase(): URL {
+  try {
+    return new URL(getAppUrl());
+  } catch {
+    return new URL("https://synthetixgit.vercel.app");
+  }
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: "SynthetixGit — GitHub Profile & README Studio",
     template: "%s · SynthetixGit",
@@ -50,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: appUrl,
+    url: getAppUrl(),
     siteName: "SynthetixGit",
     title: "SynthetixGit — GitHub Profile & README Studio",
     description:

@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local agent specs (not needed in production)
+.trae/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
