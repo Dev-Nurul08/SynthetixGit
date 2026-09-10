@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Octokit } from '@octokit/rest';
+import { getAuthSession } from '@/lib/auth-session';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { username, token, markdown, workflowYaml, commitMessage } = body;
 
-    const pat = token || process.env.GITHUB_TOKEN;
+    const session = await getAuthSession();
+    const pat =
+      token ||
+      session?.token ||
+      process.env.GITHUB_PERSONAL_ACCESS_TOKEN ||
+      process.env.GITHUB_TOKEN;
 
     if (!pat) {
       return NextResponse.json(
-        { error: 'GitHub Personal Access Token is required to deploy.' },
-        { status: 400 }
+        {
+          error:
+            'GitHub authentication required. Connect with GitHub OAuth or provide a Personal Access Token with repo scope.',
+        },
+        { status: 401 }
       );
     }
 

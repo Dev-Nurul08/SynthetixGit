@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { FiX, FiCheck, FiGithub, FiUploadCloud, FiExternalLink, FiKey, FiInfo, FiDownload, FiChevronDown, FiChevronRight } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { FiX, FiCheck, FiGithub, FiUploadCloud, FiExternalLink, FiKey, FiInfo, FiDownload, FiChevronDown, FiChevronRight, FiLogOut } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 interface DeployModalProps {
@@ -10,6 +10,12 @@ interface DeployModalProps {
   username: string;
   markdown: string;
   workflowYaml?: string | null;
+}
+
+interface AuthSession {
+  authenticated: boolean;
+  username?: string;
+  tokenPreview?: string;
 }
 
 export function DeployModal({
@@ -24,6 +30,36 @@ export function DeployModal({
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployedRepoUrl, setDeployedRepoUrl] = useState<string | null>(null);
   const [showTips, setShowTips] = useState(false);
+  const [authSession, setAuthSession] = useState<AuthSession | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setAuthLoading(true);
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((data: AuthSession) => {
+        if (!cancelled) setAuthSession(data);
+      })
+      .catch(() => {
+        if (!cancelled) setAuthSession({ authenticated: false });
+      })
+      .finally(() => {
+        if (!cancelled) setAuthLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setAuthSession({ authenticated: false });
+    toast.success('Disconnected from GitHub');
+  };
+
+  const oauthReturnTo = `/studio?user=${encodeURIComponent(username)}&mode=profile`;
 
   if (!isOpen) return null;
 
@@ -133,12 +169,12 @@ export function DeployModal({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* PRIMARY OPTION: DOWNLOAD & GITHUB PROFILE REDIRECT */}
+            {/* RECOMMENDED: DOWNLOAD */}
             <div className="rounded-2xl border border-blue-500/30 bg-blue-600/10 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📥</span>
-                  <h3 className="text-xs font-bold text-white">Option 1: Download &amp; Add to GitHub Profile (Recommended)</h3>
+                  <h3 className="text-xs font-bold text-white">Recommended · Download README</h3>
                 </div>
                 <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-500/20 px-2 py-0.5 rounded-full">Instant</span>
               </div>
@@ -177,48 +213,68 @@ export function DeployModal({
               )}
             </div>
 
-            {/* SECONDARY OPTION: DIRECT PAT DEPLOY */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
-              <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                <FiKey size={13} className="text-amber-400" />
-                <span>Option 2: Direct API Push with Personal Access Token (PAT)</span>
-              </h3>
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="ghp_xxxxxxxxxxxx (Requires repo scope)"
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="rounded-xl border border-slate-700/60 bg-slate-800/30 p-4 space-y-3">
+            {/* GITHUB OAUTH CONNECT + DIRECT DEPLOY */}
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-600/10 p-4 space-y-3">
               <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                <span>⚙️</span>
-                <span>Option 2: Download &amp; Manual Deploy</span>
+                <FiGithub size={14} className="text-emerald-400" />
+                <span>Advanced · Direct API Deploy (OAuth or PAT)</span>
               </h3>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadReadme}
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <FiDownload size={12} />
-                  <span>📥 Download README.md</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadWorkflow}
-                  disabled={!workflowYaml}
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <FiDownload size={12} />
-                  <span>📦 Download Workflow YML</span>
-                </button>
+
+              {authLoading ? (
+                <p className="text-[11px] text-slate-400">Checking GitHub connection…</p>
+              ) : authSession?.authenticated ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-3 py-2">
+                  <div>
+                    <p className="text-[11px] text-emerald-300 font-bold">
+                      Connected as @{authSession.username}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-mono">{authSession.tokenPreview}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold flex items-center gap-1"
+                  >
+                    <FiLogOut size={11} />
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Authorize SynthetixGit to push READMEs to your profile repo. Requires a GitHub OAuth App configured on Vercel.
+                  </p>
+                  <a
+                    href={`/api/auth/github?returnTo=${encodeURIComponent(oauthReturnTo)}`}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#24292f] hover:bg-[#2f363d] border border-slate-600 text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <FiGithub size={15} />
+                    <span>Connect with GitHub →</span>
+                  </a>
+                  <a
+                    href="https://github.com/settings/developers"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-blue-400"
+                  >
+                    <FiExternalLink size={10} />
+                    Configure OAuth App on GitHub
+                  </a>
+                </div>
+              )}
+
+              <div className="pt-1 border-t border-slate-800/80">
+                <label className="text-[10px] font-bold text-slate-400 block mb-1.5">
+                  Or paste a Personal Access Token (repo + workflow scopes)
+                </label>
+                <input
+                  type="password"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxx"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-blue-500"
+                />
               </div>
-              <p className="text-[10px] text-slate-500 leading-relaxed">
-                💡 Tip: Place <code className="text-slate-400">README.md</code> in your repo root and <code className="text-slate-400">snake.yml</code> inside <code className="text-slate-400">.github/workflows/</code>.
-              </p>
             </div>
 
             <div>
@@ -301,7 +357,7 @@ export function DeployModal({
               <button
                 type="button"
                 onClick={handleDeploy}
-                disabled={isDeploying}
+                disabled={isDeploying || (!authSession?.authenticated && !token.trim())}
                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-blue-600/30 disabled:opacity-50"
               >
                 {isDeploying ? (

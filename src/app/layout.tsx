@@ -19,8 +19,12 @@ const jetbrainsMono = JetBrains_Mono({
   adjustFontFallback: true,
 });
 
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://synthetixgit.vercel.app");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://synthetix.app"),
+  metadataBase: new URL(appUrl),
   title: {
     default: "SynthetixGit — GitHub Profile & README Studio",
     template: "%s · SynthetixGit",
@@ -46,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://synthetix.app",
+    url: appUrl,
     siteName: "SynthetixGit",
     title: "SynthetixGit — GitHub Profile & README Studio",
     description:
