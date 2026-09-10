@@ -62,7 +62,15 @@ export function MarkdownPreview({ markdown, username }: MarkdownPreviewProps) {
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
             components={{
-              img: ({ src, alt, ...props }) => (
+              td: ({ node, vAlign, ...props }: any) => {
+                const style = vAlign ? { verticalAlign: vAlign, ...props.style } : props.style;
+                return <td {...props} style={style} />;
+              },
+              th: ({ node, vAlign, ...props }: any) => {
+                const style = vAlign ? { verticalAlign: vAlign, ...props.style } : props.style;
+                return <th {...props} style={style} />;
+              },
+              img: ({ src, alt, node, ...props }: any) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={src}
@@ -73,7 +81,7 @@ export function MarkdownPreview({ markdown, username }: MarkdownPreviewProps) {
                   {...props}
                 />
               ),
-              a: ({ href, children, ...props }) => (
+              a: ({ href, children, node, ...props }: any) => (
                 <a
                   href={href}
                   target="_blank"
