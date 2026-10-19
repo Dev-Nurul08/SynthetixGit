@@ -355,25 +355,7 @@ export default function DashboardPage() {
         <footer className="border-t border-slate-800/80 pt-8 pb-12 mt-12">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
             <div className="flex items-center gap-2">
-              <span>SynthetixGit Architecture by</span>
-              <a
-                href="https://github.com/Dev-Shivam-05"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-bold text-slate-200 hover:text-emerald-400 transition-colors"
-              >
-                <FiGithub className="w-3.5 h-3.5" />
-                Dev-Shivam-05
-              </a>
-              <span>&amp;</span>
-              <a
-                href="https://github.com/Dev-Nurul08"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-bold text-slate-200 hover:text-cyan-400 transition-colors"
-              >
-                Dev-Nurul08
-              </a>
+              <span>SynthetixGit · Open Source Profile &amp; Contribution Studio</span>
             </div>
 
             <div className="flex items-center gap-4">

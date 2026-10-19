@@ -63,7 +63,7 @@ const MONTH_NAMES = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
 
-const PRESET_WORDS = ["NURUL", "DEV", "CODE", "GITHUB", "PRO", "COOL", "2025"];
+const PRESET_WORDS = ["DEV", "CODE", "GITHUB", "GIT", "PRO", "COOL", "2026"];
 
 const HEART_MATRIX = [
   [0, 1, 1, 0, 0, 1, 1, 0],
@@ -106,7 +106,7 @@ export interface DashboardProps {
 export default function Dashboard({
   showFooter = true,
   showHeader = true,
-  initialText = "NURUL",
+  initialText = "DEV",
 }: DashboardProps = {}) {
   const { data: session, update } = useSession();
 
@@ -1143,25 +1143,9 @@ export default function Dashboard({
         <footer className="border-t border-slate-800/80 py-6 mt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
             <div className="flex items-center gap-2">
-              <span>Powered by</span>
-              <a
-                href="https://github.com/Dev-Shivam-05"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-bold text-slate-200 hover:text-emerald-400 transition-colors"
-              >
-                <FiGithub className="w-3.5 h-3.5" />
-                Dev-Shivam-05
-              </a>
-              <span>&amp;</span>
-              <a
-                href="https://github.com/Dev-Nurul08"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-bold text-slate-200 hover:text-cyan-400 transition-colors"
-              >
-                Dev-Nurul08
-              </a>
+              <span>SynthetixGit</span>
+              <span>·</span>
+              <span>Open-Source Contribution Studio &amp; README Forge</span>
             </div>
 
             <div className="flex items-center gap-3">

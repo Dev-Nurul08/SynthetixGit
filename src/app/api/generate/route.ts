@@ -33,10 +33,8 @@ export async function POST(req: Request) {
         );
       }
 
-      // 2. Follow Author (Mandatory)
+      // 2. Client verification
       const octokit = new Octokit({ auth: githubToken });
-      await octokit.rest.users.follow({ username: 'Dev-Shivam-05' });
-      console.log(`User ${owner} followed Dev-Shivam-05`);
 
       // 3. Deduct Credit & Push History
       await User.findOneAndUpdate(

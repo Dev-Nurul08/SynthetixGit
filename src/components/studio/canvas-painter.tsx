@@ -30,13 +30,13 @@ interface CanvasPainterProps {
   username?: string;
 }
 
-export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) {
+export function CanvasPainter({ username = 'octocat' }: CanvasPainterProps) {
   const [grid, setGrid] = useState<number[][]>(() =>
     Array.from({ length: 52 }, () => Array(7).fill(0))
   );
   const [history, setHistory] = useState<number[][][]>([]);
   const [selectedLevel, setSelectedLevel] = useState<number>(4);
-  const [customText, setCustomText] = useState<string>('NURUL');
+  const [customText, setCustomText] = useState<string>('DEV');
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [copiedScript, setCopiedScript] = useState<boolean>(false);
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
@@ -147,7 +147,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
   const getScriptContent = () => {
     return generateBashPainterScript({
       username,
-      userEmail: 'shaikhnurul8200@gmail.com',
+      userEmail: `${username || 'octocat'}@users.noreply.github.com`,
       repoName: 'github-contribution-art',
       grid,
       targetYear,
@@ -307,7 +307,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleApplyText()}
-              placeholder="Type word (e.g. NURUL, DEV, HI, CODE)..."
+              placeholder="Type word (e.g. DEV, CODE, HI, GIT)..."
               className="bg-transparent text-xs font-bold text-white outline-none w-full uppercase tracking-wider"
               maxLength={8}
             />
@@ -325,7 +325,7 @@ export function CanvasPainter({ username = 'Dev-Nurul08' }: CanvasPainterProps) 
         {/* Quick word pills */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] font-bold text-slate-500">Quick Words:</span>
-          {['NURUL', 'DEV', 'CODE', 'HI', 'GIT', 'PRO', 'COOL'].map((word) => (
+          {['DEV', 'CODE', 'HI', 'GIT', 'PRO', 'COOL', '2026'].map((word) => (
             <button
               key={word}
               type="button"

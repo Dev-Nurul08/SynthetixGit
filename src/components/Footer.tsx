@@ -113,14 +113,12 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a
-                  href="https://github.com/Dev-Shivam-05"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors text-text-muted"
+                <Link
+                  href="/art-generator"
+                  className="hover:text-white transition-colors text-text-muted flex items-center gap-1.5"
                 >
-                  <span>Art Engine by Dev-Shivam-05</span>
-                </a>
+                  <span>Interactive Art Engine</span>
+                </Link>
               </li>
             </ul>
           </div>

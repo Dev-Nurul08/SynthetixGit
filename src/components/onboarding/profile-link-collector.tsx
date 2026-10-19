@@ -111,11 +111,11 @@ export function ProfileLinkCollector({
                   const val = e.target.value.trim().replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, '').replace(/\/$/, '');
                   onUpdateModule('educationAndSkills', { leetCodeUsername: val, showLeetCodeCard: true });
                 }}
-                placeholder="e.g. Fr_Nurul or https://leetcode.com/u/Fr_Nurul"
+                placeholder="e.g. your_handle or https://leetcode.com/u/your_handle"
                 className="w-full px-3 py-2 rounded-lg bg-[#0b0f14] border border-white/10 text-xs text-white outline-none focus:border-emerald-400"
               />
               <span className="text-[10px] text-slate-500 block mt-1">
-                Accepts either handle (e.g. <code>Fr_Nurul</code>) or full URL.
+                Accepts either handle (e.g. <code>your_handle</code>) or full URL.
               </span>
             </div>
 
@@ -125,7 +125,7 @@ export function ProfileLinkCollector({
                 type="text"
                 value={modules.educationAndSkills.institutionName}
                 onChange={(e) => onUpdateModule('educationAndSkills', { institutionName: e.target.value })}
-                placeholder="e.g. VidhyaDeep_University"
+                placeholder="e.g. University_Name"
                 className="w-full px-3 py-2 rounded-lg bg-[#0b0f14] border border-white/10 text-xs text-white outline-none focus:border-emerald-400"
               />
             </div>
@@ -153,7 +153,7 @@ export function ProfileLinkCollector({
                     const clean = e.target.value.trim().replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//i, '').replace(/\/$/, '');
                     onUpdateModule('socialLinks', { linkedin: clean });
                   }}
-                  placeholder="e.g. nurul-shaikh-44b41838b or full URL"
+                  placeholder="e.g. your-linkedin-profile or full URL"
                   className="w-full px-3 py-2 rounded-lg bg-[#0b0f14] border border-white/10 text-xs text-white outline-none focus:border-indigo-400"
                 />
               </div>
@@ -181,7 +181,7 @@ export function ProfileLinkCollector({
                   type="email"
                   value={modules.socialLinks.email}
                   onChange={(e) => onUpdateModule('socialLinks', { email: e.target.value.trim() })}
-                  placeholder="e.g. shaikhnurul8200@gmail.com"
+                  placeholder="e.g. your.email@example.com"
                   className="w-full px-3 py-2 rounded-lg bg-[#0b0f14] border border-white/10 text-xs text-white outline-none focus:border-indigo-400"
                 />
               </div>

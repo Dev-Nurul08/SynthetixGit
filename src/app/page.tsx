@@ -126,7 +126,7 @@ function HeroInteractivePainter() {
 
         {/* Preset Chips */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {["OCTOCAT", "NURUL", "DEV", "PRO", "2025"].map((w) => (
+          {["OCTOCAT", "DEV", "CODE", "PRO", "2026"].map((w) => (
             <button
               key={w}
               type="button"
@@ -378,7 +378,7 @@ export default function Home() {
   useEffect(() => {
     if (status === "authenticated") {
       const username = (session?.user as { username?: string })?.username || session?.user?.name;
-      if (username === "Dev-Shivam-05") {
+      if (username === "Dev-Nurul08" || username === "Dev-Shivam-05") {
         router.push("/admin");
       } else {
         router.push("/dashboard");
@@ -700,26 +700,7 @@ export default function Home() {
             </div>
             <span className="font-bold text-white">SynthetixGit</span>
             <span>·</span>
-            <span>
-              Architecture by{" "}
-              <a
-                href="https://github.com/Dev-Shivam-05"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-slate-200 hover:text-emerald-400 transition-colors"
-              >
-                Dev-Shivam-05
-              </a>{" "}
-              &amp;{" "}
-              <a
-                href="https://github.com/Dev-Nurul08"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-slate-200 hover:text-cyan-400 transition-colors"
-              >
-                Dev-Nurul08
-              </a>
-            </span>
+            <span>Open Source GitHub Contribution &amp; Profile Studio</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-5">

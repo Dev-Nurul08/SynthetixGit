@@ -59,8 +59,8 @@ export const metadata: Metadata = {
     "customize github profile",
     "git art",
   ],
-  authors: [{ name: "SynthetixGit", url: "https://github.com/Dev-Nurul08" }],
-  creator: "Dev-Nurul08",
+  authors: [{ name: "SynthetixGit Studio", url: getAppUrl() }],
+  creator: "SynthetixGit",
   openGraph: {
     type: "website",
     locale: "en_US",

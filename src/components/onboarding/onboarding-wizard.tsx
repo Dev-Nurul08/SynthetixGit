@@ -77,7 +77,7 @@ export function OnboardingWizard() {
     'widgets',
   ]);
 
-  const activeUsername = profileData?.profile?.username || inputUsername.trim() || 'Dev-Nurul08';
+  const activeUsername = profileData?.profile?.username || inputUsername.trim() || 'octocat';
 
   // Toggle a single block on/off
   const handleToggleBlock = (blockId: string) => {
@@ -281,7 +281,7 @@ export function OnboardingWizard() {
                 type="text"
                 value={inputUsername}
                 onChange={(e) => setInputUsername(e.target.value)}
-                placeholder="e.g. Dev-Nurul08, torvalds, shadcn..."
+                placeholder="e.g. octocat, torvalds, shadcn..."
                 className="w-full bg-transparent text-sm font-mono text-white outline-none placeholder:text-slate-500"
                 autoFocus
               />
@@ -309,7 +309,7 @@ export function OnboardingWizard() {
           {/* Quick profile tags */}
           <div className="pt-2 flex items-center gap-2 flex-wrap text-xs text-slate-400">
             <span className="font-bold text-slate-500">Quick Test Profiles:</span>
-            {['Dev-Nurul08', 'torvalds', 'shadcn', 'leerob'].map((u) => (
+            {['octocat', 'torvalds', 'shadcn', 'leerob'].map((u) => (
               <button
                 key={u}
                 type="button"

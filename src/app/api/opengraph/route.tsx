@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
             color: '#64748b',
           }}
         >
-          <span>github.com/Dev-Nurul08/SynthetixGit</span>
+          <span>synthetixgit.vercel.app</span>
           <span>•</span>
           <span>Interactive Profile Forge & Arcade</span>
         </div>
