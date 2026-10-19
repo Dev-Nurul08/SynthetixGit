@@ -4,10 +4,11 @@ import dbConnect from "@/lib/db";
 import User from "@/lib/models/User";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "synthetixgit-oauth-secret-key-2026",
   providers: [
     GithubProvider({
-      clientId: process.env.GITHUB_ID ?? "",
-      clientSecret: process.env.GITHUB_SECRET ?? "",
+      clientId: process.env.GITHUB_CLIENT_ID || process.env.GITHUB_ID || "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_SECRET || "",
       authorization: {
         params: {
           scope: "repo workflow read:user user:email user:follow",

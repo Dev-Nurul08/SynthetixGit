@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${getAppUrl()}/studio?auth_error=invalid_state`);
   }
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const clientId = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_ID;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_SECRET;
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(`${getAppUrl()}/studio?auth_error=oauth_not_configured`);
   }

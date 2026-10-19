@@ -4,12 +4,12 @@ import { getAppUrl } from '@/lib/app-url';
 import { setOAuthState } from '@/lib/auth-session';
 
 export async function GET(request: NextRequest) {
-  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientId = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_ID;
   if (!clientId) {
     return NextResponse.json(
       {
         error:
-          'GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET on Vercel.',
+          'GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.',
       },
       { status: 503 }
     );
